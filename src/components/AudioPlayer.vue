@@ -33,7 +33,7 @@
         :value="progress"
         min="0"
         max="100"
-        @input="(e) => handleProgressChange(e.target.value)"
+        @input="(e: Event) => handleProgressChange((e.target as HTMLInputElement).value)"
         class="progress-slider"
       />
     </div>
@@ -68,7 +68,7 @@
           :value="volume"
           min="0"
           max="100"
-          @input="(e) => setVolume(e.target.value)"
+          @input="(e: Event) => setVolume((e.target as HTMLInputElement).value)"
           class="volume-slider"
         />
       </div>
@@ -87,10 +87,10 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { defineComponent, ref, computed, onMounted, onUnmounted } from 'vue'
 import { Button, Image } from 'vant'
 import { Icon } from '@iconify/vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 
 interface AudioPlayerProps {
   bookTitle: string
@@ -127,7 +127,14 @@ export default defineComponent({
   },
   setup(props: AudioPlayerProps) {
     const router = useRouter()
+    const route = useRoute()
     const audio = ref<HTMLAudioElement | null>(null)
+    
+    // 從 query 參數或 props 獲取數據
+    const bookTitle = computed(() => route.query.bookTitle as string || props.bookTitle)
+    const authorName = computed(() => route.query.authorName as string || props.authorName)
+    const bookCover = computed(() => route.query.bookCover as string || props.bookCover)
+    const audioSrc = computed(() => route.query.audioSrc as string || props.audioSrc)
     const isPlaying = ref(false)
     const progress = ref(0)
     const currentTime = ref('00:00')
@@ -244,7 +251,7 @@ export default defineComponent({
     })
 
     // 清理事件監聽器
-    onBeforeUnmount(() => {
+    onUnmounted(() => {
       if (audio.value) {
         audio.value.removeEventListener('timeupdate', updateProgress)
         audio.value.removeEventListener('ended', handleEnded)
@@ -260,6 +267,10 @@ export default defineComponent({
 
     return {
       audio,
+      bookTitle,
+      authorName,
+      bookCover,
+      audioSrc,
       isPlaying,
       progress,
       currentTime,

@@ -117,26 +117,65 @@ export class BookService {
    */
   async getBookById(id: number): Promise<Book | null> {
     try {
-      if (this.bookCache[id.toString()]) {
-        return this.bookCache[id.toString()]
+      // 確保 id 在有效範圍內
+      if (id <= 0 || id > this.books.length) {
+        return null;
       }
 
+      // 從緩存中獲取
+      const cachedBook = this.bookCache[id.toString()];
+      if (cachedBook) {
+        return cachedBook;
+      }
+
+      // 從 LibriVox API 獲取書籍數據
       const response = await fetch(`${this.LIBRIVOX_API_BASE}?format=json&id=${id}`)
-      const data = await response.json() as LibriVoxResponse
-      
-      if (data.books.length === 0) {
-        return null
+      if (!response.ok) {
+        throw new Error(`Failed to fetch book data: ${response.status}`);
       }
+      const data: LibriVoxBook = await response.json();
 
-      const book = this.convertLibriVoxToBook(data.books[0])
-      if (book) {
-        this.bookCache[id.toString()] = book
+      // 獲取章節列表
+      const chaptersResponse = await fetch(`${this.LIBRIVOX_TRACKS_API}?format=json&project_id=${id}`)
+      if (!chaptersResponse.ok) {
+        throw new Error(`Failed to fetch chapters data: ${chaptersResponse.status}`);
       }
-      
-      return book
+      const chaptersData = await chaptersResponse.json();
+
+      // 找到第一個章節的音訊 URL
+      const firstChapter = chaptersData.books[0]?.sections?.[0];
+      const audioUrl = firstChapter?.listen_url;
+
+      // 轉換數據
+      const book: Book = {
+        id: parseInt(data.id),
+        title: data.title,
+        author: data.authors && data.authors.length > 0 
+          ? `${data.authors[0].first_name} ${data.authors[0].last_name}`.trim()
+          : 'Unknown Author',
+        cover: this.getBookCoverUrl(data),
+        description: data.description || 'No description available.',
+        audioUrl: audioUrl || data.url_rss, // 優先使用章節的 MP3 URL，否則使用 RSS feed URL
+        duration: parseInt(data.totaltimesecs) || 0,
+        category: data.genres && data.genres.length > 0 
+          ? data.genres[0].name 
+          : 'General',
+        tags: data.genres ? data.genres.map(g => g.name) : [],
+        rating: this.generateRandomRating(),
+        listenCount: this.generateRandomListenCount(),
+        language: data.language,
+        totalTimeSecs: parseInt(data.totaltimesecs) || 0,
+        urlLibrivox: data.url_librivox,
+        urlRss: data.url_rss
+      };
+
+      // 存入緩存
+      this.bookCache[id.toString()] = book;
+
+      return book;
     } catch (error) {
-      console.error('Error fetching book by ID:', error)
-      return null
+      console.error('Error fetching book data:', error);
+      return null;
     }
   }
 

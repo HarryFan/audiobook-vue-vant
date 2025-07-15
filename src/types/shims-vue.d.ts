@@ -48,3 +48,12 @@ declare module 'vant' {
   export const showToast: (options: any) => void
   export const showDialog: (options: any) => Promise<void>
 }
+
+// JSX 类型声明
+declare global {
+  namespace JSX {
+    interface IntrinsicElements {
+      [elem: string]: any
+    }
+  }
+}
