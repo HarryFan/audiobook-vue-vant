@@ -177,15 +177,34 @@
 - [ ] 音訊播放用戶行為分析
 
 ## API 選擇計劃
-- [ ] 當前 LibriVox API 遇到問題，考慮替換為其他有聲書 API
-- [ ] 評估以下 API 選項：
+- [x] 當前 LibriVox API 遇到問題，考慮替換為其他有聲書 API
+- [x] 評估以下 API 選項：
   - [ ] Open Library API
   - [ ] Project Gutenberg API
   - [ ] Google Books API
+  - [x] Internet Archive API
   - [ ] Other Public Domain Audiobook APIs
-- [ ] 選擇最適合的 API 並更新 BookService 實現
+- [x] 選擇最適合的 API：**Internet Archive API**
+  - **最簡單易用**：
+    - 不需要 API 金鑰
+    - 沒有請求配額限制
+    - 支持直接的 HTTP 請求
+    - 數據格式相對簡單
+  - **數據質量好**：
+    - Internet Archive 是一個知名的數字圖書館
+    - 有豐富的公共領域有聲書資源
+    - 數據更新頻繁且穩定
+  - **開發難度低**：
+    - API 請求簡單
+    - 數據格式標準
+    - 不需要複雜的處理邏輯
+  - **維護成本低**：
+    - 不需要額外的服務器開銷
+    - 不需要處理複雜的認證
+    - 不會有配額限制的煩惱
+- [ ] 更新 BookService 實現以支持 Internet Archive API
 - [ ] 更新相關組件以支持新 API
 - [ ] 測試新 API 的穩定性和數據質量
 - [ ] 調整數據模型以適應新 API 的數據結構
 - [ ] 更新錯誤處理機制
-- [ ] 測試新 API 的性能和響應時間發布流程
+- [ ] 測試新 API 的性能和響應時間
