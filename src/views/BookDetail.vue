@@ -70,75 +70,59 @@
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent, ref, computed } from 'vue'
+<script lang="ts" setup>
+import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { BookService } from '@/services/bookService'
 import { Book } from '@/types/book'
 import { Chapter } from '@/types/chapter'
 
-export default defineComponent({
-  name: 'BookDetail',
-  setup() {
-    const route = useRoute()
-    const router = useRouter()
-    const book = ref<Book | null>(null)
-    const showFullDescription = ref(false)
-    const activeNames = ref<string[]>([])
+const route = useRoute()
+const router = useRouter()
+const book = ref<Book | null>(null)
+const showFullDescription = ref(false)
+const activeNames = ref<string[]>([])
 
-    const fetchBook = async () => {
-      try {
-        book.value = await BookService.getInstance().getBookById(route.params.id as string)
-      } catch (error) {
-        console.error('Error fetching book:', error)
-        router.push('/books')
-      }
-    }
-
-    const formatDuration = (seconds: number): string => {
-      const hours = Math.floor(seconds / 3600)
-      const minutes = Math.floor((seconds % 3600) / 60)
-      const remainingSeconds = seconds % 60
-      return `${hours}:${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`
-    }
-
-    const toggleDescription = () => {
-      showFullDescription.value = !showFullDescription.value
-    }
-
-    const startPlaying = () => {
-      if (book.value && book.value.audioUrl) {
-        // 這裡應該調用播放器相關的邏輯
-        console.log('Playing book:', book.value.title)
-      }
-    }
-
-    const playChapter = (chapter: Chapter) => {
-      if (chapter.audioUrl) {
-        // 這裡應該調用播放器相關的邏輯
-        console.log('Playing chapter:', chapter.title)
-      }
-    }
-
-    const handleBack = () => {
-      router.back()
-    }
-
-    // 初始化數據
-    fetchBook()
-
-    return {
-      book,
-      showFullDescription,
-      activeNames,
-      formatDuration,
-      toggleDescription,
-      startPlaying,
-      playChapter,
-      handleBack
-    }
+const fetchBook = async () => {
+  try {
+    book.value = await BookService.getInstance().getBookById(route.params.id as string)
+  } catch (error) {
+    console.error('Error fetching book:', error)
+    router.push('/books')
   }
-})
+}
+
+const formatDuration = (seconds: number): string => {
+  const hours = Math.floor(seconds / 3600)
+  const minutes = Math.floor((seconds % 3600) / 60)
+  const remainingSeconds = seconds % 60
+  return `${hours}:${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`
+}
+
+const toggleDescription = () => {
+  showFullDescription.value = !showFullDescription.value
+}
+
+const startPlaying = () => {
+  if (book.value && book.value.audioUrl) {
+    // 這裡應該調用播放器相關的邏輯
+    console.log('Playing book:', book.value.title)
+  }
+}
+
+const playChapter = (chapter: Chapter) => {
+  if (chapter.audioUrl) {
+    // 這裡應該調用播放器相關的邏輯
+    console.log('Playing chapter:', chapter.title)
+  }
+}
+
+const handleBack = () => {
+  router.back()
+}
+
+// 初始化數據
+fetchBook()
 </script>
 
 <style scoped>

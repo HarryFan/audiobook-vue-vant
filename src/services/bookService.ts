@@ -84,42 +84,27 @@ export class BookService {
     return BookService.instance
   }
 
-  private async fetchArchiveData(query: string, options: any = {}): Promise<any> {
+  private async fetchArchiveData(query: string): Promise<ArchiveApiResponse> {
+    const url = `https://archive.org/advancedsearch.php?q=${encodeURIComponent(query)}&fl%5B%5D=identifier&fl%5B%5D=title&fl%5B%5D=creator&fl%5B%5D=description&fl%5B%5D=downloads&fl%5B%5D=subjects&fl%5B%5D=duration&fl%5B%5D=chapters&fl%5B%5D=audio_url&fl%5B%5D=collection&output=json&rows=100`;
     try {
-      const response = await fetch(`${this.ARCHIVE_API_BASE}/advancedsearch.php`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          q: query,
-          ...options
-        })
-      })
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
-      }
-
-      return await response.json()
+      const response = await fetch(url);
+      const data = await response.json();
+      return data;
     } catch (error) {
-      console.error('Error fetching from Archive API:', error)
-      throw error
+      console.error('Error fetching archive data:', error);
+      throw error;
     }
   }
 
-  private async fetchBookMetadata(id: string): Promise<any> {
+  private async fetchBookMetadata(identifier: string): Promise<{ metadata: ArchiveBookMetadata }> {
+    const url = `https://archive.org/metadata/${identifier}`;
     try {
-      const response = await fetch(`${this.ARCHIVE_API_BASE}/metadata/${id}`)
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
-      }
-
-      return await response.json()
+      const response = await fetch(url);
+      const data = await response.json();
+      return data;
     } catch (error) {
-      console.error('Error fetching book metadata:', error)
-      throw error
+      console.error('Error fetching book metadata:', error);
+      throw error;
     }
   }
 
@@ -156,7 +141,7 @@ export class BookService {
         return []
       }
 
-      this.books = data.response.docs.map(doc => this.convertArchiveToBook(doc))
+      this.books = data.response.docs.map((doc: ArchiveBookMetadata) => this.convertArchiveToBook(doc))
       return this.books
     } catch (error) {
       console.error('Error fetching books:', error)
@@ -232,7 +217,7 @@ export class BookService {
         return []
       }
 
-      return data.response.docs.map(doc => this.convertArchiveToBook(doc))
+      return data.response.docs.map((doc: ArchiveBookMetadata) => this.convertArchiveToBook(doc))
     } catch (error) {
       console.error('Error fetching books by category:', error)
       return []
@@ -257,7 +242,7 @@ export class BookService {
         return []
       }
 
-      this.books = data.response.docs.map(doc => this.convertArchiveToBook(doc))
+      this.books = data.response.docs.map((doc: ArchiveBookMetadata) => this.convertArchiveToBook(doc))
       return this.books
     } catch (error) {
       console.error('Error fetching books:', error)
@@ -280,7 +265,7 @@ export class BookService {
         return []
       }
 
-      return data.response.docs.map(doc => this.convertArchiveToBook(doc))
+      return data.response.docs.map((doc: ArchiveBookMetadata) => this.convertArchiveToBook(doc))
     } catch (error) {
       console.error('Error fetching recommended books:', error)
       return []
@@ -303,7 +288,7 @@ export class BookService {
         return []
       }
 
-      return data.response.docs.map(doc => this.convertArchiveToBook(doc))
+      return data.response.docs.map((doc: ArchiveBookMetadata) => this.convertArchiveToBook(doc))
     } catch (error) {
       console.error('Error fetching hot books:', error)
       return []
@@ -326,7 +311,7 @@ export class BookService {
         return []
       }
 
-      return data.response.docs.map(doc => this.convertArchiveToBook(doc))
+      return data.response.docs.map((doc: ArchiveBookMetadata) => this.convertArchiveToBook(doc))
     } catch (error) {
       console.error('Error fetching new books:', error)
       return []
@@ -351,7 +336,7 @@ export class BookService {
         })
       })
       const data = await response.json()
-      const books = data.response?.docs ? data.response.docs.map(doc => this.convertArchiveToBook(doc)) : []
+      const books = data.response?.docs ? data.response.docs.map((doc: ArchiveBookMetadata) => this.convertArchiveToBook(doc)) : []
       this.searchCache.set(query, books)
       return books
     } catch (error) {
