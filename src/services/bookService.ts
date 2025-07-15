@@ -59,8 +59,11 @@ interface LibriVoxBook {
 }
 
 class BookService {
-  private static instance
+  private static instance: BookService
   private ARCHIVE_API_BASE = 'https://archive.org'
+  private AUDIO_BOOKS_COLLECTION = 'opensource_audio'
+  private books: Book[] = []
+  private searchCache = new Map<string, Book[]>()
 
   constructor() {
     // 禁止直接實例化
@@ -73,7 +76,7 @@ class BookService {
     return BookService.instance
   }
 
-  async fetchArchiveData(query) {
+  async fetchArchiveData(query: string, options?: any) {
     const url = `https://archive.org/advancedsearch.php?q=${encodeURIComponent(query)}&fl%5B%5D=identifier&fl%5B%5D=title&fl%5B%5D=creator&fl%5B%5D=description&fl%5B%5D=downloads&fl%5B%5D=subjects&fl%5B%5D=duration&fl%5B%5D=chapters&fl%5B%5D=audio_url&fl%5B%5D=collection&output=json&rows=100`;
     try {
       const response = await fetch(url);
@@ -85,7 +88,7 @@ class BookService {
     }
   }
 
-  async fetchBookMetadata(identifier) {
+  async fetchBookMetadata(identifier: string) {
     const url = `https://archive.org/metadata/${identifier}`;
     try {
       const response = await fetch(url);
@@ -97,7 +100,7 @@ class BookService {
     }
   }
 
-  convertArchiveToBook(archiveData) {
+  convertArchiveToBook(archiveData: ArchiveBookMetadata): Book {
     return {
       id: archiveData.identifier,
       title: archiveData.title,
@@ -105,15 +108,13 @@ class BookService {
       description: archiveData.description && archiveData.description[0] || '',
       coverUrl: `https://archive.org/services/img/${archiveData.identifier}`,
       duration: archiveData.duration ? parseInt(archiveData.duration) : 0,
-      rating: 0,
-      listenCount: archiveData.downloads || 0,
+      rating: this.generateRandomRating(),
+      listenCount: this.generateRandomListenCount(),
       chapters: archiveData.chapters || [],
       audioUrl: archiveData.audio_url,
       categories: archiveData.subjects || [],
       publishedDate: '',
-      language: '',
-      rating: this.generateRandomRating(),
-      listenCount: this.generateRandomListenCount()
+      language: archiveData.audio_url || ''
     }
   }
 
@@ -125,7 +126,7 @@ class BookService {
         rows: 100
       }
       
-      const data = await this.fetchArchiveData(query, options)
+      const data = await this.fetchArchiveData(query)
       
       if (!data || !data.response || !data.response.docs) {
         console.error('Invalid response data:', data)
@@ -179,7 +180,7 @@ class BookService {
         rows: 0
       }
       
-      const data = await this.fetchArchiveData(query, options)
+      const data = await this.fetchArchiveData(query)
       
       if (!data || !data.facets || !data.facets.subject) {
         console.error('Invalid response data:', data)
@@ -201,7 +202,7 @@ class BookService {
         rows: 100
       }
       
-      const data = await this.fetchArchiveData(query, options)
+      const data = await this.fetchArchiveData(query)
       
       if (!data || !data.response || !data.response.docs) {
         console.error('Invalid response data:', data)
@@ -226,7 +227,7 @@ class BookService {
         rows: 100
       }
       
-      const data = await this.fetchArchiveData(query, options)
+      const data = await this.fetchArchiveData(query)
       
       if (!data || !data.response || !data.response.docs) {
         console.error('Invalid response data:', data)
@@ -338,3 +339,5 @@ class BookService {
     return 0
   }
 }
+
+export default BookService

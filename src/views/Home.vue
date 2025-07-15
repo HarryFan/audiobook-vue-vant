@@ -238,14 +238,14 @@
 
 <script lang="ts">
 import { defineComponent, ref, computed, onMounted } from 'vue'
-import { Search, Tabs, Tab, Image, Tag, Rate, Icon } from 'vant'
+import { Field, Tabs, Tab, Image, Tag, Rate, Icon } from 'vant'
 import { useRouter } from 'vue-router'
-import { BookService, type Book } from '../services/bookService'
+import BookService, { type Book } from '../services/bookService'
 
 export default defineComponent({
   name: 'Home',
   components: {
-    [Search.name]: Search,
+    [Field.name]: Field,
     [Tabs.name]: Tabs,
     [Tab.name]: Tab,
     [Image.name]: Image,
