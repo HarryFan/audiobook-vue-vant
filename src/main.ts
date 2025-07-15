@@ -1,13 +1,13 @@
 import { createApp } from 'vue'
 import App from './App.vue'
-import 'vant/lib/index.css'
-import { Button, Slider, Image, NavBar, Tabbar, TabbarItem } from 'vant'
+import { createVant } from 'vant'
+import router from './router'
 
 const app = createApp(App)
+const vant = createVant()
 
-app.use(Button)
-app.use(Slider)
-app.use(Image)
+app.use(vant)
+app.use(router)
 app.use(NavBar)
 app.use(Tabbar)
 app.use(TabbarItem)
