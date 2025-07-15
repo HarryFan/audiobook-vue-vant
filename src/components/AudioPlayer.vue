@@ -218,6 +218,9 @@ export default defineComponent({
       
       const newTime = (value / 100) * audio.value.duration
       audio.value.currentTime = newTime
+      
+      // 觸發時間更新事件
+      updateProgress()
     }
 
     // 監聽音訊事件
@@ -227,6 +230,11 @@ export default defineComponent({
         audio.value.addEventListener('ended', handleEnded)
         audio.value.addEventListener('error', handleError)
         audio.value.addEventListener('loadedmetadata', handleLoadedMetadata)
+        
+        // 初始化音量
+        if (volume.value !== undefined) {
+          audio.value.volume = volume.value / 100
+        }
       }
     })
 

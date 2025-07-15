@@ -29,6 +29,7 @@ export default {
 </script>
 
 <style lang="scss">
+@import "@/styles/variables.scss";
 .app-container {
   height: 100vh;
   display: flex;
