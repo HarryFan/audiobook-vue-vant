@@ -74,8 +74,7 @@
 import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { BookService } from '@/services/bookService'
-import { Book } from '@/types/book'
-import { Chapter } from '@/types/chapter'
+import { Book, Chapter } from '@/types/book'
 
 const route = useRoute()
 const router = useRouter()

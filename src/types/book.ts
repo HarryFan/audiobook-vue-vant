@@ -1,3 +1,23 @@
+export interface ArchiveApiResponse {
+  response: {
+    docs: ArchiveBookMetadata[]
+    numFound: number
+  }
+  facets: {
+    [key: string]: {
+      [key: string]: number
+    }
+  }
+}
+
+export interface Chapter {
+  id: string
+  title: string
+  duration: number
+  audioUrl: string
+  order: number
+}
+
 export interface Book {
   id: string
   title: string
@@ -12,14 +32,6 @@ export interface Book {
   categories: string[]
   publishedDate: string
   language: string
-}
-
-export interface Chapter {
-  id: string
-  title: string
-  duration: number
-  audioUrl: string
-  order: number
 }
 
 export interface ArchiveBookMetadata {
