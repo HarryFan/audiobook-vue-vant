@@ -1,41 +1,44 @@
 <template>
   <div class="book-detail">
-    <div class="book-header">
-      <van-icon name="arrow-left" @click="handleBack" />
-      <h1>{{ book.value?.title }}</h1>
-    </div>
-
-    <van-nav-bar
-      title="書籍詳情"
-      left-text="返回"
-      left-arrow
-      @click-left="handleBack"
-    />
-
-    <div class="book-cover">
-      <img :src="book.value?.coverUrl" alt="書籍封面" />
-    </div>
-
-    <div class="book-info">
-      <div class="book-meta">
-        <div class="book-author">作者：{{ book.value?.author }}</div>
-        <div class="book-duration">
-          時長：{{ formatDuration(book.value?.duration || 0) }}
-        </div>
+    <van-loading v-if="loading" type="spinner" color="#1989fa" />
+    
+    <div v-else-if="book">
+      <div class="book-header">
+        <van-icon name="arrow-left" @click="handleBack" />
+        <h1>{{ book.title }}</h1>
       </div>
 
-      <div class="book-description">
-        <div class="description-header">
-          <h2>簡介</h2>
-          <van-icon 
-            :name="showFullDescription.value ? 'arrow-up' : 'arrow-down'" 
-            @click="toggleDescription"
-          />
-        </div>
-        <div class="description-content" :class="{ 'show-full': showFullDescription.value }">
-          <p>{{ book.value?.description }}</p>
-        </div>
+      <van-nav-bar
+        title="書籍詳情"
+        left-text="返回"
+        left-arrow
+        @click-left="handleBack"
+      />
+
+      <div class="book-cover">
+        <img :src="book.coverUrl" alt="書籍封面" />
       </div>
+
+      <div class="book-info">
+        <div class="book-meta">
+          <div class="book-author">作者：{{ book.author }}</div>
+          <div class="book-duration">
+            時長：{{ formatDuration(book.duration || 0) }}
+          </div>
+        </div>
+
+        <div class="book-description">
+          <div class="description-header">
+            <h2>簡介</h2>
+            <van-icon 
+              :name="showFullDescription ? 'arrow-up' : 'arrow-down'" 
+              @click="toggleDescription"
+            />
+          </div>
+          <div class="description-content" :class="{ 'show-full': showFullDescription }">
+            <p>{{ book.description }}</p>
+          </div>
+        </div>
 
       <div class="book-controls">
         <van-button 
@@ -47,39 +50,46 @@
         </van-button>
       </div>
 
-      <div class="chapters-section">
-        <h2>章節列表</h2>
-        <van-collapse v-model="activeNames.value">
-          <van-collapse-item 
-            v-for="chapter in book.value?.chapters || []" 
-            :key="chapter.id" 
-            :name="chapter.id"
-          >
-            <template #title>
-              <div class="chapter-title">
-                <span>{{ chapter.title }}</span>
-                <span class="chapter-duration">{{ formatDuration(chapter.duration) }}</span>
+        <div class="chapters-section">
+          <h2>章節列表</h2>
+          <van-collapse v-model="activeNames">
+            <van-collapse-item 
+              v-for="chapter in book.chapters || []" 
+              :key="chapter.id" 
+              :name="chapter.id"
+            >
+              <template #title>
+                <div class="chapter-title">
+                  <span>{{ chapter.title }}</span>
+                  <span class="chapter-duration">{{ formatDuration(chapter.duration) }}</span>
+                </div>
+              </template>
+              <div class="chapter-content">
+                <van-button 
+                  type="primary" 
+                  size="small" 
+                  @click="playChapter(chapter)"
+                >
+                  播放
+                </van-button>
               </div>
-            </template>
-            <div class="chapter-content">
-              <van-button 
-                type="primary" 
-                size="small" 
-                @click="playChapter(chapter)"
-              >
-                播放
-              </van-button>
-            </div>
-          </van-collapse-item>
-        </van-collapse>
+            </van-collapse-item>
+          </van-collapse>
+        </div>
       </div>
+    </div>
+    
+    <div v-else class="error-state">
+      <p>書籍不存在或加載失敗</p>
+      <van-button @click="handleBack">返回</van-button>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { NavBar, Icon, Button, Collapse, CollapseItem, Loading } from 'vant'
 import BookService from '@/services/bookService'
 
 const route = useRoute()
@@ -87,16 +97,20 @@ const router = useRouter()
 const bookService = BookService.getInstance()
 const bookId = route.params.id
 const book = ref(null)
+const loading = ref(true)
 const showFullDescription = ref(false)
 const activeNames = ref(['1'])
 
 // 獲取書籍詳情
 const getBookDetail = async () => {
+  loading.value = true
   try {
     const data = await bookService.getBookById(bookId)
     book.value = data
   } catch (error) {
     console.error('獲取書籍詳情失敗:', error)
+  } finally {
+    loading.value = false
   }
 }
 
@@ -130,7 +144,9 @@ const startPlaying = () => {
 }
 
 // 初始化數據
-getBookDetail()
+onMounted(() => {
+  getBookDetail()
+})
 </script>
 
 <style scoped>

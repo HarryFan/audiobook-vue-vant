@@ -1,10 +1,20 @@
+import { 
+  mockBooks, 
+  getHotBooks as getMockHotBooks,
+  getNewBooks as getMockNewBooks,
+  getRecommendedBooks as getMockRecommendedBooks,
+  getBookById as getMockBookById,
+  searchBooks as searchMockBooks,
+  type MockBook
+} from '../data/mockBooks';
+
 export interface Book {
   id: string
   title: string
   author: string
   description: string
   coverUrl: string
-  duration: number
+  duration: string
   rating: number
   listenCount: number
   chapters: Chapter[]
@@ -17,56 +27,42 @@ export interface Book {
 export interface Chapter {
   id: string
   title: string
-  duration: number
+  duration: string
   audioUrl: string
-  order: number
 }
 
-export interface ArchiveBookMetadata {
-  identifier: string
-  title: string
-  creator: string[]
-  description: string[]
-  downloads: number
-  subjects: string[]
-  duration?: string
-  chapters?: any[]
-  audio_url?: string
-}
-
-// LibriVox API 接口定義
-interface LibriVoxBook {
-  id: string
-  title: string
-  description: string
-  url_rss: string
-  url_zip_file: string
-  url_project: string
-  url_librivox: string
-  url_iarchive: string
-  language: string
-  copyright_year: string
-  num_sections: string
-  totaltime: string
-  totaltimesecs: string
-  authors: Array<{ id: string; first_name: string; last_name: string; dob: string; dod: string }>
-  genres: Array<{ id: string; name: string }>
-  sections?: Array<{
-    id: string
-    section_number: string
-    title: string
-  }>
-}
+// 將 MockBook 轉換為 Book 類型的輔助函數
+const convertMockToBook = (mockBook: MockBook): Book => {
+  return {
+    id: mockBook.id,
+    title: mockBook.title,
+    author: mockBook.author,
+    description: mockBook.description || '',
+    coverUrl: mockBook.coverUrl,
+    duration: mockBook.duration || '未知',
+    rating: mockBook.rating || 0,
+    listenCount: mockBook.listenCount || 0,
+    chapters: mockBook.chapters?.map(chapter => ({
+      id: chapter.id,
+      title: chapter.title,
+      duration: chapter.duration,
+      audioUrl: chapter.audioUrl
+    })) || [],
+    audioUrl: mockBook.chapters?.[0]?.audioUrl || '',
+    categories: mockBook.categories || [],
+    publishedDate: mockBook.publishedDate || '',
+    language: mockBook.language || 'unknown'
+  };
+};
 
 class BookService {
   private static instance: BookService
-  private ARCHIVE_API_BASE = 'https://archive.org'
-  private AUDIO_BOOKS_COLLECTION = 'opensource_audio'
   private books: Book[] = []
   private searchCache = new Map<string, Book[]>()
 
   constructor() {
     // 禁止直接實例化
+    this.books = mockBooks.map(convertMockToBook)
   }
 
   static getInstance() {
@@ -76,92 +72,11 @@ class BookService {
     return BookService.instance
   }
 
-  async fetchArchiveData(query: string, options?: any) {
-    const url = `https://archive.org/advancedsearch.php?q=${encodeURIComponent(query)}&fl%5B%5D=identifier&fl%5B%5D=title&fl%5B%5D=creator&fl%5B%5D=description&fl%5B%5D=downloads&fl%5B%5D=subjects&fl%5B%5D=duration&fl%5B%5D=chapters&fl%5B%5D=audio_url&fl%5B%5D=collection&output=json&rows=100`;
-    try {
-      const response = await fetch(url);
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      console.error('Error fetching archive data:', error);
-      throw error;
-    }
-  }
 
-  async fetchBookMetadata(identifier: string) {
-    const url = `https://archive.org/metadata/${identifier}`;
-    try {
-      const response = await fetch(url);
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      console.error('Error fetching book metadata:', error);
-      throw error;
-    }
-  }
-
-  convertArchiveToBook(archiveData: ArchiveBookMetadata): Book {
-    return {
-      id: archiveData.identifier,
-      title: archiveData.title,
-      author: archiveData.creator && archiveData.creator[0] || '未知作者',
-      description: archiveData.description && archiveData.description[0] || '',
-      coverUrl: `https://archive.org/services/img/${archiveData.identifier}`,
-      duration: archiveData.duration ? parseInt(archiveData.duration) : 0,
-      rating: this.generateRandomRating(),
-      listenCount: this.generateRandomListenCount(),
-      chapters: archiveData.chapters || [],
-      audioUrl: archiveData.audio_url,
-      categories: archiveData.subjects || [],
-      publishedDate: '',
-      language: archiveData.audio_url || ''
-    }
-  }
-
-  private async fetchBooks(): Promise<Book[]> {
-    try {
-      const query = `collection:${this.AUDIO_BOOKS_COLLECTION}`
-      const options = {
-        fl: ['identifier', 'title', 'creator', 'description', 'downloads'],
-        rows: 100
-      }
-      
-      const data = await this.fetchArchiveData(query)
-      
-      if (!data || !data.response || !data.response.docs) {
-        console.error('Invalid response data:', data)
-        return []
-      }
-
-      this.books = data.response.docs.map((doc: ArchiveBookMetadata) => this.convertArchiveToBook(doc))
-      return this.books
-    } catch (error) {
-      console.error('Error fetching books:', error)
-      return []
-    }
-  }
 
   public async getBookById(id: string): Promise<Book | null> {
-    try {
-      const data = await this.fetchBookMetadata(id)
-      
-      if (!data || !data.metadata) {
-        console.error('Invalid response data:', data)
-        return null
-      }
-
-      const book = this.convertArchiveToBook(data.metadata)
-      // 從 metadata 獲取更多詳細信息
-      book.duration = parseInt(data.metadata.duration || '0')
-      book.chapters = data.metadata.chapters || []
-      book.audioUrl = data.metadata.audio_url || ''
-      book.categories = data.metadata.subjects || []
-      
-      return book
-    } catch (error) {
-      console.error('Error fetching book:', error)
-      return null
-    }
+    const mockBook = getMockBookById(id)
+    return mockBook ? convertMockToBook(mockBook) : null
   }
 
   private generateRandomRating(): number {
@@ -173,124 +88,31 @@ class BookService {
   }
 
   async getCategories(): Promise<string[]> {
-    try {
-      const query = `collection:${this.AUDIO_BOOKS_COLLECTION}`
-      const options = {
-        facet: ['subject'],
-        rows: 0
-      }
-      
-      const data = await this.fetchArchiveData(query)
-      
-      if (!data || !data.facets || !data.facets.subject) {
-        console.error('Invalid response data:', data)
-        return []
-      }
-
-      return data.facets.subject.map((facet: any) => facet.term)
-    } catch (error) {
-      console.error('Error fetching categories:', error)
-      return []
-    }
+    const allCategories = new Set<string>()
+    this.books.forEach(book => {
+      book.categories.forEach(category => allCategories.add(category))
+    })
+    return Array.from(allCategories)
   }
 
   async getBooksByCategory(category: string): Promise<Book[]> {
-    try {
-      const query = `collection:${this.AUDIO_BOOKS_COLLECTION} AND subject:"${category}"`
-      const options = {
-        fl: ['identifier', 'title', 'creator', 'description', 'downloads'],
-        rows: 100
-      }
-      
-      const data = await this.fetchArchiveData(query)
-      
-      if (!data || !data.response || !data.response.docs) {
-        console.error('Invalid response data:', data)
-        return []
-      }
-
-      return data.response.docs.map((doc: ArchiveBookMetadata) => this.convertArchiveToBook(doc))
-    } catch (error) {
-      console.error('Error fetching books by category:', error)
-      return []
-    }
+    return this.books.filter(book => book.categories.includes(category))
   }
 
   async getAllBooks(): Promise<Book[]> {
-    if (this.books.length > 0) {
-      return this.books
-    }
-    try {
-      const query = `collection:${this.AUDIO_BOOKS_COLLECTION}`
-      const options = {
-        fl: ['identifier', 'title', 'creator', 'description', 'downloads'],
-        rows: 100
-      }
-      
-      const data = await this.fetchArchiveData(query)
-      
-      if (!data || !data.response || !data.response.docs) {
-        console.error('Invalid response data:', data)
-        return []
-      }
-
-      this.books = data.response.docs.map((doc: ArchiveBookMetadata) => this.convertArchiveToBook(doc))
-      return this.books
-    } catch (error) {
-      console.error('Error fetching books:', error)
-      return []
-    }
+    return this.books
   }
 
   async getRecommendedBooks(): Promise<Book[]> {
-    try {
-      const query = `collection:${this.AUDIO_BOOKS_COLLECTION} AND subject:"recommended"`
-      const data = await this.fetchArchiveData(query)
-      
-      if (!data || !data.response || !data.response.docs) {
-        console.error('Invalid response data:', data)
-        return []
-      }
-
-      return data.response.docs.map((doc: ArchiveBookMetadata) => this.convertArchiveToBook(doc))
-    } catch (error) {
-      console.error('Error fetching recommended books:', error)
-      return []
-    }
+    return getMockRecommendedBooks().map(convertMockToBook)
   }
 
   async getHotBooks(): Promise<Book[]> {
-    try {
-      const query = `collection:${this.AUDIO_BOOKS_COLLECTION} AND downloads:[1000 TO *]`
-      const data = await this.fetchArchiveData(query)
-      
-      if (!data || !data.response || !data.response.docs) {
-        console.error('Invalid response data:', data)
-        return []
-      }
-
-      return data.response.docs.map((doc: ArchiveBookMetadata) => this.convertArchiveToBook(doc))
-    } catch (error) {
-      console.error('Error fetching hot books:', error)
-      return []
-    }
+    return getMockHotBooks().map(convertMockToBook)
   }
 
   async getNewBooks(): Promise<Book[]> {
-    try {
-      const query = `collection:${this.AUDIO_BOOKS_COLLECTION}`
-      const data = await this.fetchArchiveData(query)
-      
-      if (!data || !data.response || !data.response.docs) {
-        console.error('Invalid response data:', data)
-        return []
-      }
-
-      return data.response.docs.map((doc: ArchiveBookMetadata) => this.convertArchiveToBook(doc))
-    } catch (error) {
-      console.error('Error fetching new books:', error)
-      return []
-    }
+    return getMockNewBooks().map(convertMockToBook)
   }
 
   async searchBooks(query: string): Promise<Book[]> {
@@ -298,26 +120,9 @@ class BookService {
       return this.searchCache.get(query)!
     }
 
-    try {
-      const response = await fetch(`${this.ARCHIVE_API_BASE}/advancedsearch.php`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          q: `collection:audio_bookspoetry AND title:"${query}" OR creator:"${query}"`,
-          fl: ['identifier', 'title', 'creator', 'description', 'downloads'],
-          rows: 100
-        })
-      })
-      const data = await response.json()
-      const books = data.response?.docs ? data.response.docs.map((doc: ArchiveBookMetadata) => this.convertArchiveToBook(doc)) : []
-      this.searchCache.set(query, books)
-      return books
-    } catch (error) {
-      console.error('Error searching books:', error)
-      return []
-    }
+    const results = searchMockBooks(query).map(convertMockToBook)
+    this.searchCache.set(query, results)
+    return results
   }
 
   /**
