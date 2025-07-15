@@ -1,29 +1,37 @@
 export interface Book {
-  id: number
+  id: string
   title: string
   author: string
-  cover: string
   description: string
-  audioUrl: string
+  coverUrl: string
   duration: number
-  category: string
-  tags: string[]
   rating: number
   listenCount: number
-  chapters?: Chapter[]
-  language?: string
-  totalTimeSecs?: number
-  urlLibrivox?: string
-  urlRss?: string
+  chapters: Chapter[]
+  audioUrl: string
+  categories: string[]
+  publishedDate: string
+  language: string
 }
 
 export interface Chapter {
-  id: number
-  bookId: number
+  id: string
   title: string
   duration: number
   audioUrl: string
-  isLocked?: boolean
+  order: number
+}
+
+export interface ArchiveBookMetadata {
+  identifier: string
+  title: string
+  creator: string[]
+  description: string[]
+  downloads: number
+  subjects: string[]
+  duration?: string
+  chapters?: any[]
+  audio_url?: string
 }
 
 // LibriVox API 接口定義
@@ -115,7 +123,48 @@ export class BookService {
     }
   }
 
-  private async getBookById(id: string): Promise<Book | null> {
+  private convertArchiveToBook(doc: ArchiveBookMetadata): Book {
+    return {
+      id: doc.identifier,
+      title: doc.title || '無標題',
+      author: doc.creator?.[0] || '未知作者',
+      description: doc.description?.[0] || '暫無簡介',
+      coverUrl: `https://archive.org/services/img/${doc.identifier}`,
+      duration: parseInt(doc.duration || '0'),
+      rating: this.generateRandomRating(),
+      listenCount: this.generateRandomListenCount(),
+      chapters: [],
+      audioUrl: doc.audio_url || '',
+      categories: doc.subjects || [],
+      publishedDate: new Date().toISOString(),
+      language: '中文'
+    }
+  }
+
+  private async fetchBooks(): Promise<Book[]> {
+    try {
+      const query = `collection:${this.AUDIO_BOOKS_COLLECTION}`
+      const options = {
+        fl: ['identifier', 'title', 'creator', 'description', 'downloads'],
+        rows: 100
+      }
+      
+      const data = await this.fetchArchiveData(query, options)
+      
+      if (!data || !data.response || !data.response.docs) {
+        console.error('Invalid response data:', data)
+        return []
+      }
+
+      this.books = data.response.docs.map(doc => this.convertArchiveToBook(doc))
+      return this.books
+    } catch (error) {
+      console.error('Error fetching books:', error)
+      return []
+    }
+  }
+
+  public async getBookById(id: string): Promise<Book | null> {
     try {
       const data = await this.fetchBookMetadata(id)
       
@@ -135,24 +184,6 @@ export class BookService {
     } catch (error) {
       console.error('Error fetching book:', error)
       return null
-    }
-  }
-
-  private convertArchiveToBook(doc: any): Book {
-    return {
-      id: doc.identifier,
-      title: doc.title || '無標題',
-      author: doc.creator?.[0] || '未知作者',
-      description: doc.description?.[0] || '暫無簡介',
-      coverUrl: `https://archive.org/services/img/${doc.identifier}`,
-      duration: 0, // Internet Archive API 不直接提供時長，需要從 metadata 獲取
-      rating: this.generateRandomRating(),
-      listenCount: this.generateRandomListenCount(),
-      chapters: [], // 需要從 metadata 獲取
-      audioUrl: '', // 需要從 metadata 獲取
-      categories: [], // 需要從 metadata 獲取
-      publishedDate: new Date().toISOString(),
-      language: '中文'
     }
   }
 
@@ -298,25 +329,6 @@ export class BookService {
       return data.response.docs.map(doc => this.convertArchiveToBook(doc))
     } catch (error) {
       console.error('Error fetching new books:', error)
-      return []
-    }
-  }
-
-      const response = await fetch(`${this.ARCHIVE_API_BASE}/advancedsearch.php`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          q: `collection:audio_bookspoetry AND subject:"${category}"`,
-          fl: ['identifier', 'title', 'creator', 'description', 'downloads'],
-          rows: 100
-        })
-      })
-      const data = await response.json()
-      return data.response?.docs ? data.response.docs.map(doc => this.convertArchiveToBook(doc)) : []
-    } catch (error) {
-      console.error('Error fetching books by category:', error)
       return []
     }
   }
