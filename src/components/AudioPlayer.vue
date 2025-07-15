@@ -108,19 +108,19 @@ export default defineComponent({
   props: {
     bookTitle: {
       type: String,
-      required: true
+      default: '未知書籍'
     },
     authorName: {
       type: String,
-      required: true
+      default: '未知作者'
     },
     bookCover: {
       type: String,
-      required: true
+      default: 'https://via.placeholder.com/150x150/4a90e2/ffffff?text=No+Cover'
     },
     audioSrc: {
       type: String,
-      required: true
+      default: ''
     }
   },
   setup(props: AudioPlayerProps) {

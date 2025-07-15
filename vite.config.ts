@@ -15,5 +15,14 @@ export default defineConfig({
         additionalData: `@use "@/styles/variables.scss" as *;`
       }
     }
+  },
+  server: {
+    proxy: {
+      '/api/librivox': {
+        target: 'https://librivox.org',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/librivox/, '/api')
+      }
+    }
   }
 })

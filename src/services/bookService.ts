@@ -60,8 +60,8 @@ interface LibriVoxResponse {
 export class BookService {
   private static instance: BookService
   private books: Book[] = []
-  private readonly LIBRIVOX_API_BASE = 'https://librivox.org/api/feed/audiobooks'
-  private readonly LIBRIVOX_TRACKS_API = 'https://librivox.org/api/feed/audiotracks'
+  private readonly LIBRIVOX_API_BASE = '/api/librivox/feed/audiobooks'
+  private readonly LIBRIVOX_TRACKS_API = '/api/librivox/feed/audiotracks'
   private bookCache: { [key: string]: Book } = {}
   private categoryCache: { [key: string]: Book[] } = {}
   private searchCache: { [key: string]: Book[] } = {}
@@ -137,6 +137,48 @@ export class BookService {
     } catch (error) {
       console.error('Error fetching book by ID:', error)
       return null
+    }
+  }
+
+  /**
+   * 獲取推薦書籍
+   */
+  async getRecommendedBooks(): Promise<Book[]> {
+    try {
+      const response = await fetch(`${this.LIBRIVOX_API_BASE}?format=json&limit=15`)
+      const data = await response.json() as LibriVoxResponse
+      return data.books.map(book => this.convertLibriVoxToBook(book))
+    } catch (error) {
+      console.error('Error fetching recommended books:', error)
+      return []
+    }
+  }
+
+  /**
+   * 獲取熱門書籍
+   */
+  async getHotBooks(): Promise<Book[]> {
+    try {
+      const response = await fetch(`${this.LIBRIVOX_API_BASE}?format=json&limit=20`)
+      const data = await response.json() as LibriVoxResponse
+      return data.books.map(book => this.convertLibriVoxToBook(book))
+    } catch (error) {
+      console.error('Error fetching hot books:', error)
+      return []
+    }
+  }
+
+  /**
+   * 獲取最新書籍
+   */
+  async getNewBooks(): Promise<Book[]> {
+    try {
+      const response = await fetch(`${this.LIBRIVOX_API_BASE}?format=json&limit=20`)
+      const data = await response.json() as LibriVoxResponse
+      return data.books.map(book => this.convertLibriVoxToBook(book))
+    } catch (error) {
+      console.error('Error fetching new books:', error)
+      return []
     }
   }
 

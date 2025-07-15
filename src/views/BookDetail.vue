@@ -178,8 +178,12 @@ export default defineComponent({
 <style lang="scss">
 .book-detail {
   padding: 0 16px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
   
   .book-content {
+    flex: 1;
     margin-top: 16px;
     
     .book-cover {
@@ -201,43 +205,34 @@ export default defineComponent({
       }
 
       .book-rating {
+        display: flex;
+        align-items: center;
         margin-bottom: 16px;
-        
-        .rating-count {
-          margin-left: 8px;
-          color: #666;
-        }
+      }
+
+      .rating-count {
+        margin-left: 8px;
+        color: #666;
       }
 
       .book-meta {
         display: flex;
-        justify-content: space-between;
-        align-items: center;
+        gap: 16px;
         margin-bottom: 16px;
-        
-        .listen-count,
-        .duration {
-          font-size: 14px;
-          color: #666;
-          
-          .van-icon {
-            margin-right: 4px;
-          }
-        }
+        color: #666;
       }
 
       .book-description {
         margin-bottom: 16px;
         
         h3 {
+          margin: 0 0 8px 0;
           font-size: 18px;
-          font-weight: 600;
-          margin: 16px 0;
           color: #333;
         }
 
         p {
-          font-size: 14px;
+          margin: 0;
           color: #666;
           line-height: 1.5;
         }
@@ -247,9 +242,8 @@ export default defineComponent({
         margin-bottom: 16px;
         
         h3 {
+          margin: 0 0 8px 0;
           font-size: 18px;
-          font-weight: 600;
-          margin: 16px 0;
           color: #333;
         }
 

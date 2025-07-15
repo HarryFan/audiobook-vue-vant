@@ -103,7 +103,7 @@
 <script lang="ts">
 import { defineComponent, ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { NavBar, Cell, CellGroup, Image, Button, Tag, Dialog } from 'vant'
+import { NavBar, Cell, CellGroup, Image, Button, Tag, Dialog, Icon } from 'vant'
 import { BookService, type Book } from '../services/bookService'
 import EmptyState from '../components/EmptyState.vue'
 
