@@ -12,6 +12,7 @@
     "@iconify/vue": "^5.0.0",
     "@vueuse/core": "^10.11.1",
     "@vueuse/head": "^2.0.0",
+    "howler": "^2.2.4",
     "vant": "^4.9.21",
     "vue": "^3.5.17",
     "vue-router": "^4.5.1"

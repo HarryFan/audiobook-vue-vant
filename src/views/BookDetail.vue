@@ -62,117 +62,96 @@
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent, ref, computed, onMounted } from 'vue'
+<script lang="ts" setup>
+import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { Button, Image, Rate, Icon, Tag, NavBar } from 'vant'
 import { BookService, type Book } from '../services/bookService'
 
-export default defineComponent({
-  name: 'BookDetail',
-  components: {
-    [Button.name]: Button,
-    [Image.name]: Image,
-    [Rate.name]: Rate,
-    [Icon.name]: Icon,
-    [Tag.name]: Tag,
-    [NavBar.name]: NavBar
-  },
-  setup() {
-    const router = useRouter()
-    const route = useRoute()
-    const bookService = BookService.getInstance()
-    
-    // 從路由參數獲取書籍ID
-    const bookId = computed(() => {
-      const id = route.params.id
-      return typeof id === 'string' ? parseInt(id) : 0
-    })
-    
-    // 書籍數據
-    const book = ref<Book>({
-      id: 0,
-      title: '載入中...',
-      author: '',
-      cover: 'https://via.placeholder.com/150',
-      description: '',
-      audioUrl: '',
-      duration: 0,
-      category: '',
-      tags: [],
-      rating: 0,
-      listenCount: 0,
-      language: '',
-      totalTimeSecs: 0,
-      urlLibrivox: '',
-      urlRss: ''
-    })
-    const loading = ref(true)
+const router = useRouter()
+const route = useRoute()
+const bookService = BookService.getInstance()
 
-    // 載入書籍數據
-    const loadBook = async () => {
-      const id = bookId.value
-      if (id <= 0) return
-      
-      loading.value = true
-      try {
-        const bookData = await bookService.getBookById(id)
-        if (bookData) {
-          book.value = bookData
-        }
-      } catch (error) {
-        console.error('載入書籍失敗:', error)
-      } finally {
-        loading.value = false
-      }
-    }
-
-    // 組件掛載時載入數據
-    onMounted(() => {
-      loadBook()
-    })
-
-    // 格式化時間
-    const formatDuration = (seconds: number): string => {
-      const minutes = Math.floor(seconds / 60)
-      const hours = Math.floor(minutes / 60)
-      const remainingMinutes = minutes % 60
-      
-      if (hours > 0) {
-        return `${hours}小時${remainingMinutes}分鐘`
-      }
-      return `${minutes}分鐘`
-    }
-
-    // 返回上一頁
-    const goBack = () => {
-      router.back()
-    }
-
-    // 開始播放
-    const startPlaying = () => {
-      if (book.value.audioUrl) {
-        router.push({
-          name: 'player',
-          params: {
-            bookTitle: book.value.title,
-            authorName: book.value.author,
-            bookCover: book.value.cover,
-            audioSrc: book.value.audioUrl
-          }
-        })
-      }
-    }
-
-    return {
-      book,
-      loading,
-      formatDuration,
-      goBack,
-      startPlaying
-    }
-  }
+// 從路由參數獲取書籍ID
+const bookId = computed(() => {
+  const id = route.params.id
+  return typeof id === 'string' ? parseInt(id) : 0
 })
+
+// 書籍數據
+const book = ref<Book>({
+  id: 0,
+  title: '載入中...',
+  author: '',
+  cover: 'https://via.placeholder.com/150',
+  description: '',
+  audioUrl: '',
+  duration: 0,
+  category: '',
+  tags: [],
+  rating: 0,
+  listenCount: 0,
+  language: '',
+  totalTimeSecs: 0,
+  urlLibrivox: '',
+  urlRss: ''
+})
+const loading = ref(true)
+
+// 載入書籍數據
+const loadBook = async () => {
+  const id = bookId.value
+  if (id <= 0) return
+  
+  loading.value = true
+  try {
+    const bookData = await bookService.getBookById(id)
+    if (bookData) {
+      book.value = bookData
+    }
+  } catch (error) {
+    console.error('載入書籍失敗:', error)
+  } finally {
+    loading.value = false
+  }
+}
+
+// 組件掛載時載入數據
+onMounted(() => {
+  loadBook()
+})
+
+// 格式化時間
+const formatDuration = (seconds: number): string => {
+  const minutes = Math.floor(seconds / 60)
+  const hours = Math.floor(minutes / 60)
+  const remainingMinutes = minutes % 60
+  
+  if (hours > 0) {
+    return `${hours}小時${remainingMinutes}分鐘`
+  }
+  return `${minutes}分鐘`
+}
+
+// 返回上一頁
+const goBack = () => {
+  router.back()
+}
+
+// 開始播放
+const startPlaying = () => {
+  if (book.value.audioUrl) {
+    router.push({
+      name: 'player',
+      params: {
+        bookTitle: book.value.title,
+        authorName: book.value.author,
+        bookCover: book.value.cover,
+        audioSrc: book.value.audioUrl
+      }
+    })
+  }
+}
 </script>
 
 <style lang="scss">

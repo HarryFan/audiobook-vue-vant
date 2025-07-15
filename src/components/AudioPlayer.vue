@@ -28,12 +28,13 @@
         <span class="current-time">{{ currentTime }}</span>
         <span class="total-time">{{ totalTime }}</span>
       </div>
-      <van-slider
-        v-model="progress"
-        :min="0"
-        :max="100"
-        active-color="#007BFF"
-        @change="handleProgressChange"
+      <input
+        type="range"
+        :value="progress"
+        min="0"
+        max="100"
+        @input="(e) => handleProgressChange(e.target.value)"
+        class="progress-slider"
       />
     </div>
 
@@ -62,12 +63,13 @@
           class="iconify"
           @click="toggleMute"
         />
-        <van-slider
-          v-model="volume"
-          :min="0"
-          :max="100"
-          active-color="#007BFF"
-          @change="setVolume"
+        <input
+          type="range"
+          :value="volume"
+          min="0"
+          max="100"
+          @input="(e) => setVolume(e.target.value)"
+          class="volume-slider"
         />
       </div>
     </div>
@@ -85,8 +87,8 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, computed, onMounted, onUnmounted } from 'vue'
-import { Button, Slider, Image } from 'vant'
+import { defineComponent, ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { Button, Image } from 'vant'
 import { Icon } from '@iconify/vue'
 import { useRouter } from 'vue-router'
 
@@ -101,7 +103,7 @@ export default defineComponent({
   name: 'AudioPlayer',
   components: {
     [Button.name]: Button,
-    [Slider.name]: Slider,
+
     [Image.name]: Image,
     Icon
   },
@@ -142,9 +144,11 @@ export default defineComponent({
     }
 
     // 設置音量
-    const setVolume = (value: number) => {
+    const setVolume = (value: string | number) => {
       if (!audio.value) return
-      audio.value.volume = value / 100
+      const numValue = typeof value === 'string' ? parseInt(value) : value
+      volume.value = numValue
+      audio.value.volume = numValue / 100
       isMuted.value = false
     }
 
@@ -208,15 +212,16 @@ export default defineComponent({
 
     // 錯誤處理
     const handleError = (event: Event) => {
-      const error = event.target as HTMLAudioElement
-      error.value = error.error?.message || '播放出錯'
+      const audioElement = event.target as HTMLAudioElement
+      error.value = audioElement.error?.message || '播放出錯'
     }
 
     // 設置進度
-    const handleProgressChange = (value: number) => {
+    const handleProgressChange = (value: string | number) => {
       if (!audio.value) return
       
-      const newTime = (value / 100) * audio.value.duration
+      const numValue = typeof value === 'string' ? parseInt(value) : value
+      const newTime = (numValue / 100) * audio.value.duration
       audio.value.currentTime = newTime
       
       // 觸發時間更新事件
@@ -239,7 +244,7 @@ export default defineComponent({
     })
 
     // 清理事件監聽器
-    onUnmounted(() => {
+    onBeforeUnmount(() => {
       if (audio.value) {
         audio.value.removeEventListener('timeupdate', updateProgress)
         audio.value.removeEventListener('ended', handleEnded)
@@ -315,6 +320,33 @@ export default defineComponent({
         color: #888;
       }
     }
+    
+    .progress-slider {
+      width: 100%;
+      height: 4px;
+      border-radius: 2px;
+      background: #e5e5e5;
+      outline: none;
+      -webkit-appearance: none;
+      
+      &::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: #007BFF;
+        cursor: pointer;
+      }
+      
+      &::-moz-range-thumb {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: #007BFF;
+        cursor: pointer;
+        border: none;
+      }
+    }
   }
   
   .control-section {
@@ -346,9 +378,32 @@ export default defineComponent({
       align-items: center;
       margin-left: 16px;
       
-      .van-slider {
+      .volume-slider {
         width: 100px;
         margin-left: 8px;
+        height: 4px;
+        border-radius: 2px;
+        background: #e5e5e5;
+        outline: none;
+        -webkit-appearance: none;
+        
+        &::-webkit-slider-thumb {
+          -webkit-appearance: none;
+          width: 12px;
+          height: 12px;
+          border-radius: 50%;
+          background: #007BFF;
+          cursor: pointer;
+        }
+        
+        &::-moz-range-thumb {
+          width: 12px;
+          height: 12px;
+          border-radius: 50%;
+          background: #007BFF;
+          cursor: pointer;
+          border: none;
+        }
       }
     }
   }
