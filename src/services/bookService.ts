@@ -55,36 +55,25 @@ interface LibriVoxBook {
     id: string
     section_number: string
     title: string
-    listen_url: string
-    language: string
-    playtime: string
   }>
 }
 
-interface LibriVoxResponse {
-  books: LibriVoxBook[]
-}
+class BookService {
+  private static instance
+  private ARCHIVE_API_BASE = 'https://archive.org'
 
-export class BookService {
-  private static instance: BookService
-  private books: Book[] = []
-  private bookCache: Map<string, Book> = new Map()
-  private searchCache: Map<string, Book[]> = new Map()
-  private readonly ARCHIVE_API_BASE = 'https://archive.org'
-  private readonly AUDIO_BOOKS_COLLECTION = 'audio_bookspoetry'
-
-  private constructor() {
-    // Private constructor to prevent direct instantiation
+  constructor() {
+    // 禁止直接實例化
   }
 
-  public static getInstance(): BookService {
+  static getInstance() {
     if (!BookService.instance) {
       BookService.instance = new BookService()
     }
     return BookService.instance
   }
 
-  private async fetchArchiveData(query: string): Promise<ArchiveApiResponse> {
+  async fetchArchiveData(query) {
     const url = `https://archive.org/advancedsearch.php?q=${encodeURIComponent(query)}&fl%5B%5D=identifier&fl%5B%5D=title&fl%5B%5D=creator&fl%5B%5D=description&fl%5B%5D=downloads&fl%5B%5D=subjects&fl%5B%5D=duration&fl%5B%5D=chapters&fl%5B%5D=audio_url&fl%5B%5D=collection&output=json&rows=100`;
     try {
       const response = await fetch(url);
@@ -96,7 +85,7 @@ export class BookService {
     }
   }
 
-  private async fetchBookMetadata(identifier: string): Promise<{ metadata: ArchiveBookMetadata }> {
+  async fetchBookMetadata(identifier) {
     const url = `https://archive.org/metadata/${identifier}`;
     try {
       const response = await fetch(url);
@@ -108,21 +97,23 @@ export class BookService {
     }
   }
 
-  private convertArchiveToBook(doc: ArchiveBookMetadata): Book {
+  convertArchiveToBook(archiveData) {
     return {
-      id: doc.identifier,
-      title: doc.title || '無標題',
-      author: doc.creator?.[0] || '未知作者',
-      description: doc.description?.[0] || '暫無簡介',
-      coverUrl: `https://archive.org/services/img/${doc.identifier}`,
-      duration: parseInt(doc.duration || '0'),
+      id: archiveData.identifier,
+      title: archiveData.title,
+      author: archiveData.creator && archiveData.creator[0] || '未知作者',
+      description: archiveData.description && archiveData.description[0] || '',
+      coverUrl: `https://archive.org/services/img/${archiveData.identifier}`,
+      duration: archiveData.duration ? parseInt(archiveData.duration) : 0,
+      rating: 0,
+      listenCount: archiveData.downloads || 0,
+      chapters: archiveData.chapters || [],
+      audioUrl: archiveData.audio_url,
+      categories: archiveData.subjects || [],
+      publishedDate: '',
+      language: '',
       rating: this.generateRandomRating(),
-      listenCount: this.generateRandomListenCount(),
-      chapters: [],
-      audioUrl: doc.audio_url || '',
-      categories: doc.subjects || [],
-      publishedDate: new Date().toISOString(),
-      language: '中文'
+      listenCount: this.generateRandomListenCount()
     }
   }
 
@@ -253,12 +244,7 @@ export class BookService {
   async getRecommendedBooks(): Promise<Book[]> {
     try {
       const query = `collection:${this.AUDIO_BOOKS_COLLECTION} AND subject:"recommended"`
-      const options = {
-        fl: ['identifier', 'title', 'creator', 'description', 'downloads'],
-        rows: 100
-      }
-      
-      const data = await this.fetchArchiveData(query, options)
+      const data = await this.fetchArchiveData(query)
       
       if (!data || !data.response || !data.response.docs) {
         console.error('Invalid response data:', data)
@@ -274,14 +260,8 @@ export class BookService {
 
   async getHotBooks(): Promise<Book[]> {
     try {
-      const query = `collection:${this.AUDIO_BOOKS_COLLECTION}`
-      const options = {
-        fl: ['identifier', 'title', 'creator', 'description', 'downloads'],
-        sort: ['downloads desc'],
-        rows: 100
-      }
-      
-      const data = await this.fetchArchiveData(query, options)
+      const query = `collection:${this.AUDIO_BOOKS_COLLECTION} AND downloads:[1000 TO *]`
+      const data = await this.fetchArchiveData(query)
       
       if (!data || !data.response || !data.response.docs) {
         console.error('Invalid response data:', data)
@@ -298,13 +278,7 @@ export class BookService {
   async getNewBooks(): Promise<Book[]> {
     try {
       const query = `collection:${this.AUDIO_BOOKS_COLLECTION}`
-      const options = {
-        fl: ['identifier', 'title', 'creator', 'description', 'downloads'],
-        sort: ['date desc'],
-        rows: 10
-      }
-      
-      const data = await this.fetchArchiveData(query, options)
+      const data = await this.fetchArchiveData(query)
       
       if (!data || !data.response || !data.response.docs) {
         console.error('Invalid response data:', data)

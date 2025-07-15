@@ -1,5 +1,10 @@
 <template>
   <div class="book-detail">
+    <div class="book-header">
+      <van-icon name="arrow-left" @click="handleBack" />
+      <h1>{{ book.value?.title }}</h1>
+    </div>
+
     <van-nav-bar
       title="書籍詳情"
       left-text="返回"
@@ -12,18 +17,25 @@
     </div>
 
     <div class="book-info">
-      <h2>{{ book.value?.title }}</h2>
-      <p class="author">作者：{{ book.value?.author }}</p>
-      <p class="description" :class="{ 'truncated': !showFullDescription.value }">
-        {{ book.value?.description }}
-      </p>
-      <van-button 
-        type="primary" 
-        block 
-        @click="toggleDescription"
-      >
-        {{ showFullDescription.value ? '收起簡介' : '展開簡介' }}
-      </van-button>
+      <div class="book-meta">
+        <div class="book-author">作者：{{ book.value?.author }}</div>
+        <div class="book-duration">
+          時長：{{ formatDuration(book.value?.duration || 0) }}
+        </div>
+      </div>
+
+      <div class="book-description">
+        <div class="description-header">
+          <h2>簡介</h2>
+          <van-icon 
+            :name="showFullDescription.value ? 'arrow-up' : 'arrow-down'" 
+            @click="toggleDescription"
+          />
+        </div>
+        <div class="description-content" :class="{ 'show-full': showFullDescription.value }">
+          <p>{{ book.value?.description }}</p>
+        </div>
+      </div>
 
       <div class="book-controls">
         <van-button 
@@ -35,33 +47,28 @@
         </van-button>
       </div>
 
-      <div class="book-stats">
-        <div class="stat-item">
-          <span class="stat-value">{{ book.value?.rating }}</span>
-          <span class="stat-label">評分</span>
-        </div>
-        <div class="stat-item">
-          <span class="stat-value">{{ book.value?.listenCount }}</span>
-          <span class="stat-label">收聽次數</span>
-        </div>
-      </div>
-
-      <div class="chapters" v-if="book.value?.chapters && book.value.chapters.length > 0">
-        <h3>章節列表</h3>
+      <div class="chapters-section">
+        <h2>章節列表</h2>
         <van-collapse v-model="activeNames.value">
           <van-collapse-item 
-            v-for="chapter in book.value.chapters" 
-            :key="chapter.id"
-            :title="chapter.title"
+            v-for="chapter in book.value?.chapters || []" 
+            :key="chapter.id" 
             :name="chapter.id"
           >
-            <div class="chapter-info">
-              <p>時長：{{ formatDuration(chapter.duration) }}</p>
+            <template #title>
+              <div class="chapter-title">
+                <span>{{ chapter.title }}</span>
+                <span class="chapter-duration">{{ formatDuration(chapter.duration) }}</span>
+              </div>
+            </template>
+            <div class="chapter-content">
               <van-button 
                 type="primary" 
                 size="small" 
                 @click="playChapter(chapter)"
-              >播放</van-button>
+              >
+                播放
+              </van-button>
             </div>
           </van-collapse-item>
         </van-collapse>
@@ -70,58 +77,60 @@
   </div>
 </template>
 
-<script lang="ts" setup>
-import { ref, computed } from 'vue'
+<script setup>
+import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { BookService } from '@/services/bookService'
-import { Book, Chapter } from '@/types/book'
 
 const route = useRoute()
 const router = useRouter()
-const book = ref<Book | null>(null)
+const bookService = BookService.getInstance()
+const bookId = route.params.id
+const book = ref(null)
 const showFullDescription = ref(false)
-const activeNames = ref<string[]>([])
+const activeNames = ref(['1'])
 
-const fetchBook = async () => {
+// 獲取書籍詳情
+const getBookDetail = async () => {
   try {
-    book.value = await BookService.getInstance().getBookById(route.params.id as string)
+    const data = await bookService.getBookById(bookId)
+    book.value = data
   } catch (error) {
-    console.error('Error fetching book:', error)
-    router.push('/books')
+    console.error('獲取書籍詳情失敗:', error)
   }
 }
 
-const formatDuration = (seconds: number): string => {
+// 格式化時間
+const formatDuration = (seconds) => {
   const hours = Math.floor(seconds / 3600)
   const minutes = Math.floor((seconds % 3600) / 60)
   const remainingSeconds = seconds % 60
+
   return `${hours}:${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`
 }
 
-const toggleDescription = () => {
-  showFullDescription.value = !showFullDescription.value
+// 播放章節
+const playChapter = (chapter) => {
+  console.log('播放章節:', chapter)
 }
 
-const startPlaying = () => {
-  if (book.value && book.value.audioUrl) {
-    // 這裡應該調用播放器相關的邏輯
-    console.log('Playing book:', book.value.title)
-  }
-}
-
-const playChapter = (chapter: Chapter) => {
-  if (chapter.audioUrl) {
-    // 這裡應該調用播放器相關的邏輯
-    console.log('Playing chapter:', chapter.title)
-  }
-}
-
+// 返回上一頁
 const handleBack = () => {
   router.back()
 }
 
+// 切換描述顯示
+const toggleDescription = () => {
+  showFullDescription.value = !showFullDescription.value
+}
+
+// 開始播放
+const startPlaying = () => {
+  console.log('開始播放書籍:', book.value)
+}
+
 // 初始化數據
-fetchBook()
+getBookDetail()
 </script>
 
 <style scoped>
