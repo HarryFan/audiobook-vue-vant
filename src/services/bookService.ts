@@ -59,16 +59,14 @@ interface LibriVoxResponse {
 
 export class BookService {
   private static instance: BookService
+  private LIBRIVOX_API_BASE = '/api/librivox/api'
+  private LIBRIVOX_TRACKS_API = '/api/librivox/track'
+  private bookCache: Map<string, Book> = new Map()
   private books: Book[] = []
-  private readonly LIBRIVOX_API_BASE = '/api/librivox/feed/audiobooks'
-  private readonly LIBRIVOX_TRACKS_API = '/api/librivox/feed/audiotracks'
-  private bookCache: { [key: string]: Book } = {}
-  private categoryCache: { [key: string]: Book[] } = {}
-  private searchCache: { [key: string]: Book[] } = {}
+  private searchCache: Map<string, Book[]> = new Map()
 
   private constructor() {
-    // 初始化模擬數據（可選，用於開發測試）
-    this.books = []
+    // 單例模式
   }
 
   public static getInstance(): BookService {
@@ -78,43 +76,60 @@ export class BookService {
     return BookService.instance
   }
 
-  /**
-   * 獲取所有書籍
-   */
-  async getAllBooks(): Promise<Book[]> {
+  private async fetchBooks(): Promise<Book[]> {
     try {
       const response = await fetch(`${this.LIBRIVOX_API_BASE}?format=json`)
       const data = await response.json() as LibriVoxResponse
-      return data.books.map(book => this.convertLibriVoxToBook(book))
+      this.books = data.books.map(book => this.convertLibriVoxToBook(book))
+      return this.books
     } catch (error) {
       console.error('Error fetching books:', error)
       return []
     }
   }
 
-  /**
-   * 根據類別獲取書籍
-   */
-  async getBooksByCategory(category: string): Promise<Book[]> {
-    try {
-      if (this.categoryCache[category]) {
-        return this.categoryCache[category]
-      }
+  private convertLibriVoxToBook(libriVoxBook: LibriVoxBook): Book {
+    const author = libriVoxBook.authors && libriVoxBook.authors.length > 0 
+      ? `${libriVoxBook.authors[0].first_name} ${libriVoxBook.authors[0].last_name}`.trim()
+      : 'Unknown Author'
+    
+    const category = libriVoxBook.genres && libriVoxBook.genres.length > 0 
+      ? libriVoxBook.genres[0].name 
+      : 'General'
 
-      const response = await fetch(`${this.LIBRIVOX_API_BASE}?format=json&genre=${encodeURIComponent(category)}`)
-      const data = await response.json() as LibriVoxResponse
-      const books = data.books.map(book => this.convertLibriVoxToBook(book))
-      this.categoryCache[category] = books
-      return books
-    } catch (error) {
-      console.error('Error fetching books by category:', error)
-      return []
+    return {
+      id: parseInt(libriVoxBook.id),
+      title: libriVoxBook.title,
+      author,
+      cover: this.getBookCoverUrl(libriVoxBook),
+      description: libriVoxBook.description || 'No description available.',
+      audioUrl: libriVoxBook.url_rss,
+      duration: parseInt(libriVoxBook.totaltimesecs) || 0,
+      category,
+      tags: libriVoxBook.genres ? libriVoxBook.genres.map(g => g.name) : [],
+      rating: this.generateRandomRating(),
+      listenCount: this.generateRandomListenCount(),
+      language: libriVoxBook.language,
+      totalTimeSecs: parseInt(libriVoxBook.totaltimesecs) || 0,
+      urlLibrivox: libriVoxBook.url_librivox,
+      urlRss: libriVoxBook.url_rss
     }
   }
 
-  /**
-   * 根據 ID 獲取書籍詳情
-   */
+  private generateRandomRating(): number {
+    return Math.round((Math.random() * 2 + 3) * 10) / 10; // 3.0-5.0
+  }
+
+  private generateRandomListenCount(): number {
+    return Math.floor(Math.random() * 5000) + 100;
+  }
+
+  private getBookCoverUrl(data: LibriVoxBook): string {
+    // 使用 Internet Archive 的封面圖像
+    const bookId = data.id;
+    return `https://archive.org/services/img/librivox_${bookId}_coverart`;
+  }
+
   async getBookById(id: number): Promise<Book | null> {
     try {
       // 確保 id 在有效範圍內
@@ -123,20 +138,20 @@ export class BookService {
       }
 
       // 從緩存中獲取
-      const cachedBook = this.bookCache[id.toString()];
+      const cachedBook = this.bookCache.get(id.toString());
       if (cachedBook) {
         return cachedBook;
       }
 
       // 從 LibriVox API 獲取書籍數據
-      const response = await fetch(`${this.LIBRIVOX_API_BASE}?format=json&id=${id}`)
+      const response = await fetch(`${this.LIBRIVOX_API_BASE}?format=json&id=${id}`);
       if (!response.ok) {
         throw new Error(`Failed to fetch book data: ${response.status}`);
       }
       const data: LibriVoxBook = await response.json();
 
       // 獲取章節列表
-      const chaptersResponse = await fetch(`${this.LIBRIVOX_TRACKS_API}?format=json&project_id=${id}`)
+      const chaptersResponse = await fetch(`${this.LIBRIVOX_TRACKS_API}?format=json&project_id=${id}`);
       if (!chaptersResponse.ok) {
         throw new Error(`Failed to fetch chapters data: ${chaptersResponse.status}`);
       }
@@ -147,30 +162,11 @@ export class BookService {
       const audioUrl = firstChapter?.listen_url;
 
       // 轉換數據
-      const book: Book = {
-        id: parseInt(data.id),
-        title: data.title,
-        author: data.authors && data.authors.length > 0 
-          ? `${data.authors[0].first_name} ${data.authors[0].last_name}`.trim()
-          : 'Unknown Author',
-        cover: this.getBookCoverUrl(data),
-        description: data.description || 'No description available.',
-        audioUrl: audioUrl || data.url_rss, // 優先使用章節的 MP3 URL，否則使用 RSS feed URL
-        duration: parseInt(data.totaltimesecs) || 0,
-        category: data.genres && data.genres.length > 0 
-          ? data.genres[0].name 
-          : 'General',
-        tags: data.genres ? data.genres.map(g => g.name) : [],
-        rating: this.generateRandomRating(),
-        listenCount: this.generateRandomListenCount(),
-        language: data.language,
-        totalTimeSecs: parseInt(data.totaltimesecs) || 0,
-        urlLibrivox: data.url_librivox,
-        urlRss: data.url_rss
-      };
+      const book = this.convertLibriVoxToBook(data);
+      book.audioUrl = audioUrl || book.audioUrl; // 優先使用章節的 MP3 URL
 
       // 存入緩存
-      this.bookCache[id.toString()] = book;
+      this.bookCache.set(id.toString(), book);
 
       return book;
     } catch (error) {
@@ -179,142 +175,32 @@ export class BookService {
     }
   }
 
-  /**
-   * 獲取推薦書籍
-   */
-  async getRecommendedBooks(): Promise<Book[]> {
+  async searchBooks(query: string): Promise<Book[]> {
     try {
-      const response = await fetch(`${this.LIBRIVOX_API_BASE}?format=json&limit=15`)
-      const data = await response.json() as LibriVoxResponse
-      return data.books.map(book => this.convertLibriVoxToBook(book))
-    } catch (error) {
-      console.error('Error fetching recommended books:', error)
-      return []
-    }
-  }
-
-  /**
-   * 獲取熱門書籍
-   */
-  async getHotBooks(): Promise<Book[]> {
-    try {
-      const response = await fetch(`${this.LIBRIVOX_API_BASE}?format=json&limit=20`)
-      const data = await response.json() as LibriVoxResponse
-      return data.books.map(book => this.convertLibriVoxToBook(book))
-    } catch (error) {
-      console.error('Error fetching hot books:', error)
-      return []
-    }
-  }
-
-  /**
-   * 獲取最新書籍
-   */
-  async getNewBooks(): Promise<Book[]> {
-    try {
-      const response = await fetch(`${this.LIBRIVOX_API_BASE}?format=json&limit=20`)
-      const data = await response.json() as LibriVoxResponse
-      return data.books.map(book => this.convertLibriVoxToBook(book))
-    } catch (error) {
-      console.error('Error fetching new books:', error)
-      return []
-    }
-  }
-
-  /**
-   * 搜索書籍
-   */
-  async searchBooks(keyword: string): Promise<Book[]> {
-    try {
-      const cacheKey = keyword.toLowerCase()
-      if (this.searchCache[cacheKey]) {
-        return this.searchCache[cacheKey]
+      const cacheKey = query.toLowerCase()
+      if (this.searchCache.has(cacheKey)) {
+        return this.searchCache.get(cacheKey)!
       }
 
-      const titleResults = await this.searchByTitle(keyword)
-      const authorResults = await this.searchByAuthor(keyword)
-      
-      // 合併結果並去重
-      const allResults = [...titleResults, ...authorResults]
-      const uniqueResults = allResults.filter((book, index, self) => 
-        index === self.findIndex(b => b.id === book.id)
-      )
-      
-      this.searchCache[cacheKey] = uniqueResults
-      return uniqueResults
+      const response = await fetch(`${this.LIBRIVOX_API_BASE}?format=json&search=${query}`)
+      const data = await response.json() as LibriVoxResponse
+      const results = data.books.map(book => this.convertLibriVoxToBook(book))
+      this.searchCache.set(cacheKey, results)
+      return results
     } catch (error) {
       console.error('Error searching books:', error)
       return []
     }
   }
 
-  /**
-   * 根據標題搜索
-   */
-  private async searchByTitle(keyword: string): Promise<Book[]> {
+  async getCategories(): Promise<string[]> {
     try {
-      const response = await fetch(`${this.LIBRIVOX_API_BASE}?format=json&title=${encodeURIComponent(keyword)}`)
+      const response = await fetch(`${this.LIBRIVOX_API_BASE}?format=json&list=genres`)
       const data = await response.json() as LibriVoxResponse
-      return data.books.map(book => this.convertLibriVoxToBook(book))
+      return data.genres.map(genre => genre.name)
     } catch (error) {
-      console.error('Error searching by title:', error)
+      console.error('Error fetching categories:', error)
       return []
-    }
-  }
-
-  /**
-   * 根據作者搜索
-   */
-  private async searchByAuthor(keyword: string): Promise<Book[]> {
-    try {
-      const response = await fetch(`${this.LIBRIVOX_API_BASE}?format=json&author=${encodeURIComponent(keyword)}`)
-      const data = await response.json() as LibriVoxResponse
-      return data.books.map(book => this.convertLibriVoxToBook(book))
-    } catch (error) {
-      console.error('Error searching by author:', error)
-      return []
-    }
-  }
-
-  /**
-   * 獲取章節列表
-   */
-  async getChapters(bookId: number): Promise<Chapter[]> {
-    try {
-      const response = await fetch(`${this.LIBRIVOX_TRACKS_API}?format=json&project_id=${bookId}`)
-      const data = await response.json() as LibriVoxResponse
-      
-      if (!data.books[0]?.sections) {
-        return []
-      }
-      
-      return data.books[0].sections.map(section => ({
-        id: parseInt(section.id),
-        bookId,
-        title: section.title,
-        duration: this.parseTimeToSeconds(section.playtime),
-        audioUrl: section.listen_url,
-        isLocked: false // LibriVox 的內容都是免費的
-      }))
-    } catch (error) {
-      console.error('Error fetching chapters:', error)
-      return []
-    }
-  }
-
-  /**
-   * 將 LibriVox API 響應轉換為本地 Book 格式
-   */
-  private convertLibriVoxToBook(libriVoxBook: LibriVoxBook): Book {
-    const author = libriVoxBook.authors && libriVoxBook.authors.length > 0 
-      ? `${libriVoxBook.authors[0].first_name} ${libriVoxBook.authors[0].last_name}`.trim()
-      : 'Unknown Author'
-    
-    const category = libriVoxBook.genres && libriVoxBook.genres.length > 0 
-      ? libriVoxBook.genres[0].name 
-      : 'General'
-    
-    const tags = libriVoxBook.genres ? libriVoxBook.genres.map(g => g.name) : []
     
     // 生成隨機評分和收聽次數
     const rating = Math.round((Math.random() * 2 + 3) * 10) / 10 // 3.0-5.0

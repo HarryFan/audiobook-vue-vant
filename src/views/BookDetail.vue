@@ -31,7 +31,7 @@
 
         <div class="book-description">
           <h3>書籍簡介</h3>
-          <p>{{ book.description }}</p>
+          <p>{{ truncatedDescription }}</p>
         </div>
 
         <div class="book-tags">
@@ -132,6 +132,15 @@ const formatDuration = (seconds: number): string => {
   }
   return `${minutes}分鐘`
 }
+
+// 限制書籍簡介長度
+const truncatedDescription = computed(() => {
+  const description = book.value.description
+  if (description.length <= 500) {
+    return description
+  }
+  return description.substring(0, 500) + '...'
+})
 
 // 返回上一頁
 const goBack = () => {
