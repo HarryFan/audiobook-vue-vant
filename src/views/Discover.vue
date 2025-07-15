@@ -151,7 +151,7 @@
 import { defineComponent, ref, computed, onMounted } from 'vue'
 import { NavBar, Tabs, Tab, Image, Tag, Rate, Icon, DropdownMenu, DropdownItem } from 'vant'
 import { useRouter } from 'vue-router'
-import { BookService, Book } from '../services/bookService'
+import BookService, { Book } from '../services/bookService'
 import AppLoading from '../components/Loading.vue'
 import EmptyState from '../components/EmptyState.vue'
 
@@ -215,7 +215,7 @@ export default defineComponent({
       } else {
         // 特定分類
         const categoryName = categories.value.find(c => c.id === activeCategory.value)?.name || ''
-        return applyFilters(books.value.filter(book => book.category === categoryName))
+        return applyFilters(books.value.filter(book => (book as any).category === categoryName))
       }
     })
     
@@ -226,13 +226,13 @@ export default defineComponent({
       // 應用排序
       if (sortValue.value === 1) {
         // 熱門優先
-        result.sort((a, b) => b.listenCount - a.listenCount)
+        result.sort((a, b) => Number(b.listenCount) - Number(a.listenCount))
       } else if (sortValue.value === 2) {
         // 評分最高
-        result.sort((a, b) => b.rating - a.rating)
+        result.sort((a, b) => Number(b.rating) - Number(a.rating))
       } else if (sortValue.value === 3) {
         // 最新上架
-        result.sort((a, b) => b.id - a.id)
+        result.sort((a, b) => Number(b.id) - Number(a.id))
       }
       
       return result

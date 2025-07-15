@@ -80,7 +80,7 @@
 <script setup>
 import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { BookService } from '@/services/bookService'
+import BookService from '@/services/bookService'
 
 const route = useRoute()
 const router = useRouter()
