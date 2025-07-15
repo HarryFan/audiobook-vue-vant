@@ -5,7 +5,7 @@ import AudioPlayer from '../components/AudioPlayer.vue'
 const routes = [
   {
     path: '/',
-    redirect: '/player'
+    redirect: '/home'
   },
   {
     path: '/home',
@@ -37,11 +37,16 @@ const routes = [
     path: '/profile',
     name: 'profile',
     component: () => import('../views/Profile.vue')
+  },
+  {
+    path: '/login',
+    name: 'login',
+    component: () => import('../views/Login.vue')
   }
 ]
 
 const router = createRouter({
-  history: createWebHistory(process.env.BASE_URL),
+  history: createWebHistory('/'),
   routes
 })
 

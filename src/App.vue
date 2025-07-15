@@ -1,31 +1,49 @@
 <template>
   <div class="app-container">
     <router-view></router-view>
-    <van-tabbar v-model="active" route>
-      <van-tabbar-item to="/home" icon="home-o">首頁</van-tabbar-item>
-      <van-tabbar-item to="/discover" icon="search">發現</van-tabbar-item>
-      <van-tabbar-item to="/catalog" icon="book-o">目錄</van-tabbar-item>
-      <van-tabbar-item to="/profile" icon="user-o">我的</van-tabbar-item>
-      <van-tabbar-item to="/player" icon="play-circle-o">播放中</van-tabbar-item>
-    </van-tabbar>
+    <VanTabbar v-model="active" route>
+      <VanTabbarItem to="/home">
+        <template #icon><Icon icon="mdi:home" /></template>
+        首頁
+      </VanTabbarItem>
+      <VanTabbarItem to="/discover">
+        <template #icon><Icon icon="mdi:magnify" /></template>
+        發現
+      </VanTabbarItem>
+      <VanTabbarItem to="/catalog">
+        <template #icon><Icon icon="mdi:book-open-variant" /></template>
+        目錄
+      </VanTabbarItem>
+      <VanTabbarItem to="/profile">
+        <template #icon><Icon icon="mdi:account" /></template>
+        我的
+      </VanTabbarItem>
+      <VanTabbarItem to="/player">
+        <template #icon><Icon icon="mdi:play-circle" /></template>
+        播放中
+      </VanTabbarItem>
+    </VanTabbar>
   </div>
 </template>
 
-<script lang="ts">
-import { ref } from 'vue'
-import { Tabbar, TabbarItem } from 'vant'
+<script setup lang="ts">
+import {
+  Tabbar as VanTabbar,
+  TabbarItem as VanTabbarItem
+} from 'vant';
+import { Icon } from '@iconify/vue';
+import { ref } from 'vue';
 
-export default {
-  name: 'App',
-  components: {
-    [Tabbar.name]: Tabbar,
-    [TabbarItem.name]: TabbarItem
-  },
-  setup() {
-    const active = ref(4) // 播放詳情頁為默認頁面
-    return { active }
-  }
-}
+// 當前激活的標籤頁
+const active = ref(0) // 將首頁作為默認頁面
+
+// 根據當前路徑設置激活的標籤
+const currentPath = window.location.pathname
+if (currentPath.includes('/home')) active.value = 0
+if (currentPath.includes('/discover')) active.value = 1
+if (currentPath.includes('/catalog')) active.value = 2
+if (currentPath.includes('/profile')) active.value = 3
+if (currentPath.includes('/player')) active.value = 4
 </script>
 
 <style lang="scss">
