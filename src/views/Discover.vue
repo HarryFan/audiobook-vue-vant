@@ -204,8 +204,8 @@ export default defineComponent({
     
     // 書籍數據
     const books = ref<Book[]>([])
-    const hotBooks = computed(() => bookService.getHotBooks())
-    const newBooks = computed(() => bookService.getNewBooks())
+    const hotBooks = ref<Book[]>([])
+    const newBooks = ref<Book[]>([])
     
     // 篩選後的書籍
     const filteredBooks = computed(() => {
@@ -279,13 +279,28 @@ export default defineComponent({
       router.back()
     }
     
-    // 初始化數據
-    onMounted(async () => {
-      // 模擬網絡請求
-      setTimeout(() => {
-        books.value = bookService.getAllBooks()
+    // 載入數據
+    const loadData = async () => {
+      loading.value = true
+      try {
+        const [allBooks, hot, newBooksData] = await Promise.all([
+          bookService.getAllBooks(),
+          bookService.getHotBooks(),
+          bookService.getNewBooks()
+        ])
+        books.value = allBooks
+        hotBooks.value = hot
+        newBooks.value = newBooksData
+      } catch (error) {
+        console.error('載入數據失敗:', error)
+      } finally {
         loading.value = false
-      }, 800)
+      }
+    }
+
+    // 初始化數據
+    onMounted(() => {
+      loadData()
     })
     
     return {

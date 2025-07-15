@@ -101,10 +101,10 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, reactive } from 'vue'
+import { defineComponent, ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { Image, Icon, Tag, Cell, CellGroup, Button, Dialog } from 'vant'
-import { BookService, Book } from '../services/bookService'
+import { NavBar, Cell, CellGroup, Image, Button, Tag, Dialog } from 'vant'
+import { BookService, type Book } from '../services/bookService'
 import EmptyState from '../components/EmptyState.vue'
 
 export default defineComponent({
@@ -137,21 +137,41 @@ export default defineComponent({
     })
     
     // 最近收聽的書籍
-    const allBooks = bookService.getAllBooks()
-    const recentBooks = ref<(Book & { progress: string })[]>([
-      {
-        ...allBooks[0],
-        progress: '已聽23%，第3章'
-      },
-      {
-        ...allBooks[2],
-        progress: '已聽56%，第12章'
-      },
-      {
-        ...allBooks[5],
-        progress: '已聽8%，第1章'
+    const recentBooks = ref<(Book & { progress: string })[]>([])
+    const loading = ref(true)
+
+    // 載入最近收聽的書籍
+    const loadRecentBooks = async () => {
+      loading.value = true
+      try {
+        const allBooks = await bookService.getAllBooks()
+        if (allBooks.length >= 6) {
+          recentBooks.value = [
+            {
+              ...allBooks[0],
+              progress: '已聽23%，第3章'
+            },
+            {
+              ...allBooks[2],
+              progress: '已聽56%，第12章'
+            },
+            {
+              ...allBooks[5],
+              progress: '已聽8%，第1章'
+            }
+          ]
+        }
+      } catch (error) {
+        console.error('載入最近收聽書籍失敗:', error)
+      } finally {
+        loading.value = false
       }
-    ])
+    }
+
+    // 組件掛載時載入數據
+    onMounted(() => {
+      loadRecentBooks()
+    })
     
     // 頁面導航
     const navigateTo = (path: string) => {
@@ -203,6 +223,7 @@ export default defineComponent({
     return {
       userInfo,
       recentBooks,
+      loading,
       showClearCacheDialog,
       navigateTo,
       navigateToBook,

@@ -47,7 +47,7 @@ if (currentPath.includes('/player')) active.value = 4
 </script>
 
 <style lang="scss">
-@import "@/styles/variables.scss";
+@use "@/styles/variables.scss" as *;
 .app-container {
   height: 100vh;
   display: flex;

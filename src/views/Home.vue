@@ -237,10 +237,10 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, computed } from 'vue'
+import { defineComponent, ref, computed, onMounted } from 'vue'
 import { Search, Tabs, Tab, Image, Tag, Rate, Icon } from 'vant'
 import { useRouter } from 'vue-router'
-import { BookService } from '../services/bookService'
+import { BookService, type Book } from '../services/bookService'
 
 export default defineComponent({
   name: 'Home',
@@ -265,9 +265,10 @@ export default defineComponent({
     const hotSearchTags = ref<string[]>(['科幻', '懸疑', '愛情', '歷史', '冒險'])
 
     // 分類數據
-    const recommendedBooks = computed(() => bookService.getRecommendedBooks())
-    const hotBooks = computed(() => bookService.getHotBooks())
-    const newBooks = computed(() => bookService.getNewBooks())
+    const recommendedBooks = ref<Book[]>([])
+    const hotBooks = ref<Book[]>([])
+    const newBooks = ref<Book[]>([])
+    const loading = ref(true)
 
     // 格式化時間
     const formatDuration = (seconds: number): string => {
@@ -282,13 +283,42 @@ export default defineComponent({
     }
 
     // 搜索
-    const onSearch = (value: string) => {
+    const onSearch = async (value: string) => {
       if (!value) {
         searchResults.value = []
         return
       }
-      searchResults.value = bookService.searchBooks(value)
+      try {
+        searchResults.value = await bookService.searchBooks(value)
+      } catch (error) {
+        console.error('搜索失敗:', error)
+        searchResults.value = []
+      }
     }
+
+    // 載入數據
+    const loadData = async () => {
+      loading.value = true
+      try {
+        const [recommended, hot, newBooksData] = await Promise.all([
+          bookService.getRecommendedBooks(),
+          bookService.getHotBooks(),
+          bookService.getNewBooks()
+        ])
+        recommendedBooks.value = recommended
+        hotBooks.value = hot
+        newBooks.value = newBooksData
+      } catch (error) {
+        console.error('載入數據失敗:', error)
+      } finally {
+        loading.value = false
+      }
+    }
+
+    // 組件掛載時載入數據
+    onMounted(() => {
+      loadData()
+    })
 
     // 跳轉到書籍詳情
     const goToBookDetail = (bookId: number) => {
@@ -304,6 +334,7 @@ export default defineComponent({
       recommendedBooks,
       hotBooks,
       newBooks,
+      loading,
       onSearch,
       goToBookDetail,
       formatDuration

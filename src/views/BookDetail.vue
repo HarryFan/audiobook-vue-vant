@@ -63,10 +63,10 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, computed } from 'vue'
+import { defineComponent, ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { Button, Image, Rate, Icon, Tag, NavBar } from 'vant'
-import { BookService } from '../services/bookService'
+import { BookService, type Book } from '../services/bookService'
 
 export default defineComponent({
   name: 'BookDetail',
@@ -89,22 +89,47 @@ export default defineComponent({
       return typeof id === 'string' ? parseInt(id) : 0
     })
     
-    // 獲取書籍數據
-    const book = computed(() => {
+    // 書籍數據
+    const book = ref<Book>({
+      id: 0,
+      title: '載入中...',
+      author: '',
+      cover: 'https://via.placeholder.com/150',
+      description: '',
+      audioUrl: '',
+      duration: 0,
+      category: '',
+      tags: [],
+      rating: 0,
+      listenCount: 0,
+      language: '',
+      totalTimeSecs: 0,
+      urlLibrivox: '',
+      urlRss: ''
+    })
+    const loading = ref(true)
+
+    // 載入書籍數據
+    const loadBook = async () => {
       const id = bookId.value
-      return id > 0 ? bookService.getBookById(id) : {
-        id: 0,
-        title: '書籍標題',
-        author: '作者',
-        cover: 'https://via.placeholder.com/150',
-        description: '書籍描述',
-        audioUrl: '',
-        duration: 0,
-        category: '',
-        tags: [],
-        rating: 0,
-        listenCount: 0
+      if (id <= 0) return
+      
+      loading.value = true
+      try {
+        const bookData = await bookService.getBookById(id)
+        if (bookData) {
+          book.value = bookData
+        }
+      } catch (error) {
+        console.error('載入書籍失敗:', error)
+      } finally {
+        loading.value = false
       }
+    }
+
+    // 組件掛載時載入數據
+    onMounted(() => {
+      loadBook()
     })
 
     // 格式化時間
@@ -141,6 +166,7 @@ export default defineComponent({
 
     return {
       book,
+      loading,
       formatDuration,
       goBack,
       startPlaying

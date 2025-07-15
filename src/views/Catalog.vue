@@ -73,7 +73,7 @@
 import { defineComponent, ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { NavBar, Button, Image, Icon, Tag, Loading, List, Dialog } from 'vant'
-import { BookService, Book, Chapter } from '../services/bookService'
+import { BookService, type Book, type Chapter } from '../services/bookService'
 import EmptyState from '../components/EmptyState.vue'
 
 export default defineComponent({
@@ -104,22 +104,23 @@ export default defineComponent({
       return typeof id === 'string' ? parseInt(id) : 0
     })
     
-    // 獲取書籍數據
-    const book = computed<Book>(() => {
-      const id = bookId.value
-      return id > 0 ? bookService.getBookById(id) : {
-        id: 0,
-        title: '書籍標題',
-        author: '作者',
-        cover: 'https://via.placeholder.com/150',
-        description: '書籍描述',
-        audioUrl: '',
-        duration: 0,
-        category: '',
-        tags: [],
-        rating: 0,
-        listenCount: 0
-      }
+    // 書籍數據
+    const book = ref<Book>({
+      id: 0,
+      title: '載入中...',
+      author: '',
+      cover: 'https://via.placeholder.com/150',
+      description: '',
+      audioUrl: '',
+      duration: 0,
+      category: '',
+      tags: [],
+      rating: 0,
+      listenCount: 0,
+      language: '',
+      totalTimeSecs: 0,
+      urlLibrivox: '',
+      urlRss: ''
     })
     
     // 獲取章節列表
@@ -199,16 +200,34 @@ export default defineComponent({
       router.push('/profile')
     }
     
-    onMounted(async () => {
-      if (bookId.value > 0) {
-        // 模擬網絡延遲
-        setTimeout(() => {
-          chapters.value = bookService.getChapters(bookId.value)
-          loading.value = false
-        }, 800)
-      } else {
+    // 載入數據
+    const loadData = async () => {
+      const id = bookId.value
+      if (id <= 0) {
+        loading.value = false
+        return
+      }
+      
+      loading.value = true
+      try {
+        const [bookData, chaptersData] = await Promise.all([
+          bookService.getBookById(id),
+          bookService.getChapters(id)
+        ])
+        
+        if (bookData) {
+          book.value = bookData
+        }
+        chapters.value = chaptersData
+      } catch (error) {
+        console.error('載入數據失敗:', error)
+      } finally {
         loading.value = false
       }
+    }
+
+    onMounted(() => {
+      loadData()
     })
     
     return {

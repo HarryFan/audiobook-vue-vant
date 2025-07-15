@@ -26,7 +26,7 @@ export interface Chapter {
   isLocked?: boolean
 }
 
-// LibriVox API 響應接口
+// LibriVox API 接口定義
 interface LibriVoxBook {
   id: string
   title: string
@@ -62,9 +62,13 @@ export class BookService {
   private books: Book[] = []
   private readonly LIBRIVOX_API_BASE = 'https://librivox.org/api/feed/audiobooks'
   private readonly LIBRIVOX_TRACKS_API = 'https://librivox.org/api/feed/audiotracks'
+  private bookCache: { [key: string]: Book } = {}
+  private categoryCache: { [key: string]: Book[] } = {}
+  private searchCache: { [key: string]: Book[] } = {}
 
   private constructor() {
-    // 不再使用假數據，改為從 LibriVox API 獲取
+    // 初始化模擬數據（可選，用於開發測試）
+    this.books = []
   }
 
   public static getInstance(): BookService {
@@ -72,6 +76,149 @@ export class BookService {
       BookService.instance = new BookService()
     }
     return BookService.instance
+  }
+
+  /**
+   * 獲取所有書籍
+   */
+  async getAllBooks(): Promise<Book[]> {
+    try {
+      const response = await fetch(`${this.LIBRIVOX_API_BASE}?format=json`)
+      const data = await response.json() as LibriVoxResponse
+      return data.books.map(book => this.convertLibriVoxToBook(book))
+    } catch (error) {
+      console.error('Error fetching books:', error)
+      return []
+    }
+  }
+
+  /**
+   * 根據類別獲取書籍
+   */
+  async getBooksByCategory(category: string): Promise<Book[]> {
+    try {
+      if (this.categoryCache[category]) {
+        return this.categoryCache[category]
+      }
+
+      const response = await fetch(`${this.LIBRIVOX_API_BASE}?format=json&genre=${encodeURIComponent(category)}`)
+      const data = await response.json() as LibriVoxResponse
+      const books = data.books.map(book => this.convertLibriVoxToBook(book))
+      this.categoryCache[category] = books
+      return books
+    } catch (error) {
+      console.error('Error fetching books by category:', error)
+      return []
+    }
+  }
+
+  /**
+   * 根據 ID 獲取書籍詳情
+   */
+  async getBookById(id: number): Promise<Book | null> {
+    try {
+      if (this.bookCache[id.toString()]) {
+        return this.bookCache[id.toString()]
+      }
+
+      const response = await fetch(`${this.LIBRIVOX_API_BASE}?format=json&id=${id}`)
+      const data = await response.json() as LibriVoxResponse
+      
+      if (data.books.length === 0) {
+        return null
+      }
+
+      const book = this.convertLibriVoxToBook(data.books[0])
+      if (book) {
+        this.bookCache[id.toString()] = book
+      }
+      
+      return book
+    } catch (error) {
+      console.error('Error fetching book by ID:', error)
+      return null
+    }
+  }
+
+  /**
+   * 搜索書籍
+   */
+  async searchBooks(keyword: string): Promise<Book[]> {
+    try {
+      const cacheKey = keyword.toLowerCase()
+      if (this.searchCache[cacheKey]) {
+        return this.searchCache[cacheKey]
+      }
+
+      const titleResults = await this.searchByTitle(keyword)
+      const authorResults = await this.searchByAuthor(keyword)
+      
+      // 合併結果並去重
+      const allResults = [...titleResults, ...authorResults]
+      const uniqueResults = allResults.filter((book, index, self) => 
+        index === self.findIndex(b => b.id === book.id)
+      )
+      
+      this.searchCache[cacheKey] = uniqueResults
+      return uniqueResults
+    } catch (error) {
+      console.error('Error searching books:', error)
+      return []
+    }
+  }
+
+  /**
+   * 根據標題搜索
+   */
+  private async searchByTitle(keyword: string): Promise<Book[]> {
+    try {
+      const response = await fetch(`${this.LIBRIVOX_API_BASE}?format=json&title=${encodeURIComponent(keyword)}`)
+      const data = await response.json() as LibriVoxResponse
+      return data.books.map(book => this.convertLibriVoxToBook(book))
+    } catch (error) {
+      console.error('Error searching by title:', error)
+      return []
+    }
+  }
+
+  /**
+   * 根據作者搜索
+   */
+  private async searchByAuthor(keyword: string): Promise<Book[]> {
+    try {
+      const response = await fetch(`${this.LIBRIVOX_API_BASE}?format=json&author=${encodeURIComponent(keyword)}`)
+      const data = await response.json() as LibriVoxResponse
+      return data.books.map(book => this.convertLibriVoxToBook(book))
+    } catch (error) {
+      console.error('Error searching by author:', error)
+      return []
+    }
+  }
+
+  /**
+   * 獲取章節列表
+   */
+  async getChapters(bookId: number): Promise<Chapter[]> {
+    try {
+      const response = await fetch(`${this.LIBRIVOX_TRACKS_API}?format=json&project_id=${bookId}`)
+      const data = await response.json() as LibriVoxResponse
+      
+      if (!data.books[0]?.sections) {
+        return []
+      }
+      
+      return data.books[0].sections.map(section => ({
+        id: parseInt(section.id),
+        bookId,
+        title: section.title,
+        duration: this.parseTimeToSeconds(section.playtime),
+        audioUrl: section.listen_url,
+        isLocked: false // LibriVox 的內容都是免費的
+      }))
+    } catch (error) {
+      console.error('Error fetching chapters:', error)
+      return []
+    }
   }
 
   /**
@@ -88,15 +235,24 @@ export class BookService {
     
     const tags = libriVoxBook.genres ? libriVoxBook.genres.map(g => g.name) : []
     
-    // 生成隨機評分和收聽次數（因為 LibriVox 沒有這些數據）
+    // 生成隨機評分和收聽次數
     const rating = Math.round((Math.random() * 2 + 3) * 10) / 10 // 3.0-5.0
     const listenCount = Math.floor(Math.random() * 5000) + 100
+    
+    // 提取 Internet Archive 標識符來構建封面 URL
+    let coverUrl = 'https://via.placeholder.com/150x200?text=No+Cover'
+    if (libriVoxBook.url_iarchive) {
+      const archiveId = libriVoxBook.url_iarchive.split('/').pop()
+      if (archiveId) {
+        coverUrl = `https://archive.org/services/img/${archiveId}`
+      }
+    }
     
     return {
       id: parseInt(libriVoxBook.id),
       title: libriVoxBook.title,
       author,
-      cover: `https://archive.org/services/img/${libriVoxBook.url_iarchive?.split('/').pop()}`,
+      cover: coverUrl,
       description: libriVoxBook.description || 'No description available.',
       audioUrl: libriVoxBook.url_zip_file || '',
       duration: parseInt(libriVoxBook.totaltimesecs) || 0,
@@ -112,127 +268,7 @@ export class BookService {
   }
 
   /**
-   * 從 LibriVox API 獲取書籍數據
-   */
-  private async fetchBooksFromLibriVox(params: string = ''): Promise<Book[]> {
-    try {
-      let url: string
-      if (params.startsWith('?')) {
-        url = `${this.LIBRIVOX_API_BASE}${params}&format=json&extended=1`
-      } else if (params.startsWith('/')) {
-        url = `${this.LIBRIVOX_API_BASE}${params}?format=json&extended=1&limit=50`
-      } else {
-        url = `${this.LIBRIVOX_API_BASE}?format=json&extended=1&limit=50`
-      }
-      
-      console.log('Fetching from URL:', url) // 調試用
-      const response = await fetch(url)
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
-      }
-      
-      const data: LibriVoxResponse = await response.json()
-      return data.books.map(book => this.convertLibriVoxToBook(book))
-    } catch (error) {
-      console.error('Error fetching books from LibriVox:', error)
-      return []
-    }
-  }
-
-  async getBooksByCategory(category: string): Promise<Book[]> {
-    return await this.fetchBooksFromLibriVox(`/genre/${encodeURIComponent(category)}`)
-  }
-
-  async getHotBooks(): Promise<Book[]> {
-    // LibriVox 沒有熱門排序，我們獲取最新的書籍
-    const books = await this.fetchBooksFromLibriVox('?limit=20')
-    return books.sort((a, b) => b.listenCount - a.listenCount).slice(0, 10)
-  }
-
-  async getNewBooks(): Promise<Book[]> {
-    // 獲取最新添加的書籍
-    return await this.fetchBooksFromLibriVox('?limit=10')
-  }
-
-  async getRecommendedBooks(): Promise<Book[]> {
-    // 獲取一些經典書籍作為推薦
-    const books = await this.fetchBooksFromLibriVox('?limit=20')
-    return books.filter(book => book.rating >= 4.5).slice(0, 10)
-  }
-
-  async getBookById(id: number): Promise<Book | undefined> {
-    try {
-      const books = await this.fetchBooksFromLibriVox(`?id=${id}`)
-      return books.length > 0 ? books[0] : undefined
-    } catch (error) {
-      console.error('Error fetching book by ID:', error)
-      return undefined
-    }
-  }
-
-  async searchBooks(keyword: string): Promise<Book[]> {
-    try {
-      // 搜索標題
-      const titleResults = await this.fetchBooksFromLibriVox(`/title/${encodeURIComponent(keyword)}`)
-      // 搜索作者
-      const authorResults = await this.fetchBooksFromLibriVox(`/author/${encodeURIComponent(keyword)}`)
-      
-      // 合併結果並去重
-      const allResults = [...titleResults, ...authorResults]
-      const uniqueResults = allResults.filter((book, index, self) => 
-        index === self.findIndex(b => b.id === book.id)
-      )
-      
-      return uniqueResults
-    } catch (error) {
-      console.error('Error searching books:', error)
-      return []
-    }
-  }
-  
-  async getAllBooks(): Promise<Book[]> {
-    return await this.fetchBooksFromLibriVox('?limit=100')
-  }
-  
-  /**
-   * 獲取書籍的章節列表
-   * @param bookId 書籍ID
-   * @returns 章節列表數組
-   */
-  async getChapters(bookId: number): Promise<Chapter[]> {
-    try {
-      const url = `${this.LIBRIVOX_TRACKS_API}?project_id=${bookId}&format=json`
-      const response = await fetch(url)
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
-      }
-      
-      const data = await response.json()
-      
-      if (!data.sections || !Array.isArray(data.sections)) {
-        return []
-      }
-      
-      return data.sections.map((section: any, index: number) => ({
-        id: parseInt(section.id) || index + 1,
-        bookId: bookId,
-        title: section.title || `Chapter ${section.section_number || index + 1}`,
-        duration: this.parseTimeToSeconds(section.playtime) || 0,
-        audioUrl: section.listen_url || '',
-        isLocked: false // LibriVox 的所有內容都是免費的
-      }))
-    } catch (error) {
-      console.error('Error fetching chapters from LibriVox:', error)
-      return []
-    }
-  }
-  
-  /**
    * 將時間字符串轉換為秒數
-   * @param timeString 時間字符串 (例如: "12:34" 或 "1:23:45")
-   * @returns 秒數
    */
   private parseTimeToSeconds(timeString: string): number {
     if (!timeString) return 0
