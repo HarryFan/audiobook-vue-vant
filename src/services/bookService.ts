@@ -59,8 +59,9 @@ interface LibriVoxResponse {
 
 export class BookService {
   private static instance: BookService
-  private LIBRIVOX_API_BASE = '/api/librivox/api'
-  private LIBRIVOX_TRACKS_API = '/api/librivox/track'
+  private LIBRIVOX_API_BASE = '/api/librivox'
+  private LIBRIVOX_TRACKS_API = '/api/librivox'
+  private LIBRIVOX_BOOKS_ENDPOINT = '/api/books/json'
   private bookCache: Map<string, Book> = new Map()
   private books: Book[] = []
   private searchCache: Map<string, Book[]> = new Map()
@@ -78,8 +79,23 @@ export class BookService {
 
   private async fetchBooks(): Promise<Book[]> {
     try {
+      // 使用 LibriVox API 的正確端點
       const response = await fetch(`${this.LIBRIVOX_API_BASE}?format=json`)
-      const data = await response.json() as LibriVoxResponse
+      
+      // 確保請求成功
+      if (!response.ok) {
+        console.error('API request failed:', response.status)
+        return []
+      }
+
+      const data = await response.json()
+      
+      // LibriVox API 返回的數據結構是 {books: []}
+      if (!data || !data.books) {
+        console.error('Invalid response data:', data)
+        return []
+      }
+
       this.books = data.books.map(book => this.convertLibriVoxToBook(book))
       return this.books
     } catch (error) {
@@ -193,6 +209,71 @@ export class BookService {
     }
   }
 
+  async getAllBooks(): Promise<Book[]> {
+    try {
+      await this.fetchBooks()
+      return this.books
+    } catch (error) {
+      console.error('Error fetching all books:', error)
+      return []
+    }
+  }
+
+  async getBooksByCategory(category: string): Promise<Book[]> {
+    try {
+      const response = await fetch(`${this.LIBRIVOX_API_BASE}?format=json&genre=${category}`)
+      const data = await response.json() as LibriVoxResponse
+      return data.books.map(book => this.convertLibriVoxToBook(book))
+    } catch (error) {
+      console.error('Error fetching books by category:', error)
+      return []
+    }
+  }
+
+  async getRecommendedBooks(): Promise<Book[]> {
+    try {
+      await this.fetchBooks()
+      // 按評分排序，取前10本
+      return this.books
+        .sort((a, b) => b.rating - a.rating)
+        .slice(0, 10)
+    } catch (error) {
+      console.error('Error fetching recommended books:', error)
+      return []
+    }
+  }
+
+  async getHotBooks(): Promise<Book[]> {
+    try {
+      await this.fetchBooks()
+      // 按收聽次數排序，取前10本
+      return this.books
+        .sort((a, b) => b.listenCount - a.listenCount)
+        .slice(0, 10)
+    } catch (error) {
+      console.error('Error fetching hot books:', error)
+      return []
+    }
+  }
+
+  async getNewBooks(): Promise<Book[]> {
+    try {
+      // 使用 LibriVox API 的正確端點
+      const response = await fetch(`${this.LIBRIVOX_API_BASE}?format=json&sort=date&dir=desc&limit=10`)
+      const data = await response.json()
+      
+      if (!data || !data.books) {
+        console.error('Invalid response data:', data)
+        return []
+      }
+
+      return data.books.map(book => this.convertLibriVoxToBook(book))
+    } catch (error) {
+      console.error('Error fetching new books:', error)
+      return []
+    }
+  }
+
   async getCategories(): Promise<string[]> {
     try {
       const response = await fetch(`${this.LIBRIVOX_API_BASE}?format=json&list=genres`)
@@ -201,36 +282,6 @@ export class BookService {
     } catch (error) {
       console.error('Error fetching categories:', error)
       return []
-    
-    // 生成隨機評分和收聽次數
-    const rating = Math.round((Math.random() * 2 + 3) * 10) / 10 // 3.0-5.0
-    const listenCount = Math.floor(Math.random() * 5000) + 100
-    
-    // 提取 Internet Archive 標識符來構建封面 URL
-    let coverUrl = 'https://via.placeholder.com/150x200?text=No+Cover'
-    if (libriVoxBook.url_iarchive) {
-      const archiveId = libriVoxBook.url_iarchive.split('/').pop()
-      if (archiveId) {
-        coverUrl = `https://archive.org/services/img/${archiveId}`
-      }
-    }
-    
-    return {
-      id: parseInt(libriVoxBook.id),
-      title: libriVoxBook.title,
-      author,
-      cover: coverUrl,
-      description: libriVoxBook.description || 'No description available.',
-      audioUrl: libriVoxBook.url_zip_file || '',
-      duration: parseInt(libriVoxBook.totaltimesecs) || 0,
-      category,
-      tags,
-      rating,
-      listenCount,
-      language: libriVoxBook.language,
-      totalTimeSecs: parseInt(libriVoxBook.totaltimesecs) || 0,
-      urlLibrivox: libriVoxBook.url_librivox,
-      urlRss: libriVoxBook.url_rss
     }
   }
 
