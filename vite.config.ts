@@ -21,12 +21,7 @@ export default defineConfig({
       '/api/librivox': {
         target: 'https://librivox.org',
         changeOrigin: true,
-        rewrite: (path) => {
-          // 確保請求轉發到正確的 API 端點
-          const params = path.includes('?') ? path.split('?')[1] : ''
-          return `/api/books/json?${params}`
-        },
-        secure: false
+        rewrite: (path) => path.replace(/^\/api\/librivox/, '/api')
       }
     }
   }

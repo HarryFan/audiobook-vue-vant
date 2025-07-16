@@ -73,7 +73,7 @@
 import { defineComponent, ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { NavBar, Button, Image, Icon, Tag, Loading, List, Dialog } from 'vant'
-import BookService, { type Book, type Chapter } from '../services/bookService'
+import { BookService, type Book, type Chapter } from '../services/bookService'
 import EmptyState from '../components/EmptyState.vue'
 
 export default defineComponent({
@@ -101,7 +101,7 @@ export default defineComponent({
     // 從路由參數獲取書籍ID
     const bookId = computed(() => {
       const id = route.params.id
-      return typeof id === 'string' ? id : '0'
+      return typeof id === 'string' ? parseInt(id) : 0
     })
     
     // 書籍數據
@@ -109,6 +109,7 @@ export default defineComponent({
       id: 0,
       title: '載入中...',
       author: '',
+      cover: 'https://via.placeholder.com/150',
       description: '',
       audioUrl: '',
       duration: 0,
@@ -123,7 +124,7 @@ export default defineComponent({
     })
     
     // 獲取章節列表
-    const chapters = ref<(Chapter & { isLocked?: boolean })[]>([])
+    const chapters = ref<Chapter[]>([])
     
     // 根據排序顯示章節
     const displayChapters = computed(() => {
@@ -174,7 +175,7 @@ export default defineComponent({
     }
     
     // 播放指定章節
-    const playChapter = (chapter: Chapter & { isLocked?: boolean }) => {
+    const playChapter = (chapter: Chapter) => {
       if (chapter.isLocked) {
         showVipDialog.value = true
         return
@@ -186,7 +187,7 @@ export default defineComponent({
         params: {
           bookTitle: book.value.title,
           authorName: book.value.author,
-          bookCover: book.value.audioUrl || '',
+          bookCover: book.value.cover,
           audioSrc: chapter.audioUrl,
           chapterId: chapter.id.toString(),
           chapterTitle: chapter.title
@@ -202,35 +203,22 @@ export default defineComponent({
     // 載入數據
     const loadData = async () => {
       const id = bookId.value
-      if (id === '0') {
+      if (id <= 0) {
         loading.value = false
         return
       }
       
       loading.value = true
       try {
-        const bookData = await bookService.getBookById(parseInt(id))
+        const [bookData, chaptersData] = await Promise.all([
+          bookService.getBookById(id),
+          bookService.getChapters(id)
+        ])
         
         if (bookData) {
           book.value = bookData
-          // 模拟章节数据
-          chapters.value = [
-            {
-              id: 1,
-              title: '第一章',
-              audioUrl: bookData.audioUrl,
-              duration: 1800,
-              isLocked: false
-            },
-            {
-              id: 2,
-              title: '第二章',
-              audioUrl: bookData.audioUrl,
-              duration: 2100,
-              isLocked: true
-            }
-          ]
         }
+        chapters.value = chaptersData
       } catch (error) {
         console.error('載入數據失敗:', error)
       } finally {
