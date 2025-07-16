@@ -199,7 +199,8 @@ export default {
     // 處理圖片加載錯誤
     const handleImageError = event => {
       const img = event.target;
-      img.src = 'https://via.placeholder.com/210x315?text=No+Cover';
+      // 使用一個簡單的 SVG 作為替代圖片
+      img.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMTAiIGhlaWdodD0iMzE1IiB2aWV3Qm94PSIwIDAgMjEwIDMxNSIgZmlsbD0iI2YwZjBmMCI+CiAgPHJlY3Qgd2lkdGg9IjIxMCIgaGVpZ2h0PSIzMTUiIGZpbGw9IiNlZWVlZWUiLz4KICA8dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE0IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBhbGlnbm1lbnQtYmFzZWxpbmU9Im1pZGRsZSIgZmlsbD0iIzk5OSI+Tm8gQ292ZXI8L3RleHQ+Cjwvc3ZnPg==';
       img.onerror = null; // 防止無限循環
     };
 
