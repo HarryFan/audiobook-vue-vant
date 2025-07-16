@@ -1,5 +1,7 @@
 <template>
   <div class="app-container">
+    <h1>測試頁面渲染</h1>
+    <div class="test-box">基本元素渲染測試</div>
     <router-view></router-view>
     <VanTabbar v-model="active" route>
       <VanTabbarItem to="/home">
@@ -52,5 +54,14 @@ if (currentPath.includes('/player')) active.value = 4
   height: 100vh;
   display: flex;
   flex-direction: column;
+}
+
+.test-box {
+  padding: 20px;
+  margin: 20px;
+  background-color: #007BFF;
+  color: white;
+  text-align: center;
+  border-radius: 8px;
 }
 </style>

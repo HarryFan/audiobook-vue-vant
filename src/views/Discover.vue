@@ -270,8 +270,8 @@ export default defineComponent({
     }
     
     // 跳轉到書籍詳情
-    const goToBookDetail = (bookId: number) => {
-      router.push({ name: 'bookDetail', params: { id: bookId } })
+    const goToBookDetail = (bookId: number | string) => {
+      router.push({ name: 'bookDetail', params: { id: bookId.toString() } })
     }
     
     // 返回上一頁

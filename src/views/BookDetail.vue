@@ -75,7 +75,11 @@ const bookService = BookService.getInstance()
 // 從路由參數獲取書籍ID
 const bookId = computed(() => {
   const id = route.params.id
-  return typeof id === 'string' ? parseInt(id) : 0
+  if (typeof id === 'string') {
+    const parsedId = parseInt(id)
+    return isNaN(parsedId) ? 0 : parsedId
+  }
+  return 0
 })
 
 // 書籍數據
