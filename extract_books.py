@@ -10,16 +10,13 @@ def extract_books(html_content):
             # 提取書籍基本資訊
             title = item.select_one('h4 a')['title']
             author = item.select_one('.contributor-info a').text.strip()
-            cover = item.select_one('img[itemprop="image"]')['src'].split('?')[0]  # 移除查詢參數
+            cover = item.select_one('img[itemprop="image"]')['data-lazy-original'] or item.select_one('img[itemprop="image"]')['src']
+            cover = cover.split('?')[0]  # 移除查詢參數
             description = item.select_one('p.description').text.strip()
-
-            # 提取評分
-            rating_elem = item.select_one('.avg-rating')
-            rating = float(rating_elem.text.strip()) if rating_elem and rating_elem.text.strip() else 4.0
 
             # 提取價格
             price_elem = item.select_one('.price .price')
-            price = float(price_elem.text.strip()) if price_elem and price_elem.text.strip() else 0
+            price = float(price_elem.text.strip()) if price_elem and price_elem.text.strip().isdigit() else 0
 
             # 建立書籍對象
             book = {
@@ -32,8 +29,8 @@ def extract_books(html_content):
                 'duration': 3600,  # 預設值
                 'category': "'未分類'",
                 'tags': "['未分類']",
-                'rating': rating,
-                'listenCount': 1000 + idx * 100,
+                'rating': round(4.0 + (idx % 5) * 0.2, 1),  # 4.0-5.0 的隨機評分
+                'listenCount': 1000 + idx * 100,  # 遞增的聆聽次數
                 'language': "'中文'",
                 'totalTimeSecs': 3600,  # 預設值
                 'chapters': "["
@@ -82,7 +79,7 @@ def main():
     with open('book_data.ts', 'w', encoding='utf-8') as f:
         f.write(ts_code)
 
-    print("TypeScript 代碼已生成到 book_data.ts")
+    print(f"成功提取 {len(books)} 本書籍數據到 book_data.ts")
 
 if __name__ == "__main__":
     main()
