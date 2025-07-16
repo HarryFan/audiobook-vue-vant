@@ -2,13 +2,7 @@
   <div class="home-page">
     <!-- 頂部導航 -->
     <div class="top-nav">
-      <van-search 
-        v-model="searchValue" 
-        placeholder="搜索書籍" 
-        shape="round"
-        @search="onSearch"
-        @focus="showSearchPanel = true"
-      />
+      <van-search v-model="searchValue" placeholder="搜索書籍" shape="round" @search="onSearch" @focus="showSearchPanel = true" />
     </div>
 
     <!-- 搜索面板 -->
@@ -16,55 +10,25 @@
       <div v-if="showSearchPanel" class="search-panel">
         <div class="search-header">
           <van-icon name="arrow-left" @click="showSearchPanel = false" />
-          <van-search 
-            v-model="searchValue" 
-            placeholder="搜索書籍" 
-            shape="round"
-            @search="onSearch"
-            @cancel="showSearchPanel = false"
-          />
+          <van-search v-model="searchValue" placeholder="搜索書籍" shape="round" @search="onSearch" @cancel="showSearchPanel = false" />
         </div>
         <div class="search-content">
           <div v-if="searchResults.length === 0" class="search-suggestions">
             <h3>熱門搜索</h3>
             <div class="suggestion-tags">
-              <van-tag 
-                v-for="tag in hotSearchTags" 
-                :key="tag" 
-                plain
-                size="small"
-                @click="onSearch(tag)"
-              >
+              <van-tag v-for="tag in hotSearchTags" :key="tag" plain size="small" @click="onSearch(tag)">
                 {{ tag }}
               </van-tag>
             </div>
           </div>
           <div v-else class="search-results">
-            <div 
-              v-for="book in searchResults" 
-              :key="book.id" 
-              class="book-item"
-              @click="goToBookDetail(book.id)"
-            >
-              <van-image 
-                :src="book.cover" 
-                width="100%" 
-                height="80px"
-                fit="cover"
-                radius="4px"
-              />
+            <div v-for="book in searchResults" :key="book.id" class="book-item" @click="goToBookDetail(book.id)">
+              <van-image :src="book.cover" width="100%" height="80px" fit="cover" radius="4px" />
               <div class="book-info">
                 <h3 class="book-title">{{ book.title }}</h3>
                 <p class="book-author">{{ book.author }}</p>
                 <div class="book-rating">
-                  <van-rate 
-                    v-model="book.rating" 
-                    readonly 
-                    size="12px"
-                    color="#ffd21e"
-                    void-icon="star"
-                    void-color="#eee"
-                  />
+                  <van-rate v-model="book.rating" readonly size="12px" color="#ffd21e" void-icon="star" void-color="#eee" />
                 </div>
               </div>
             </div>
@@ -79,48 +43,27 @@
         <!-- 推薦書籍 -->
         <van-tab title="推薦">
           <div class="book-list">
-            <div 
-              v-for="book in recommendedBooks" 
-              :key="book.id" 
-              class="book-item"
-              @click="goToBookDetail(book.id)"
-            >
-              <van-image 
-                :src="book.cover" 
-                width="100%" 
-                height="150px"
-                fit="cover"
-                radius="8px"
-              />
+            <div v-for="book in recommendedBooks" :key="book.id" class="book-item" @click="goToBookDetail(book.id)">
+              <van-image :src="book.cover" width="100%" height="150px" fit="cover" radius="8px" />
               <div class="book-info">
                 <h3 class="book-title">{{ book.title }}</h3>
                 <p class="book-author">{{ book.author }}</p>
                 <div class="book-rating">
-                  <van-rate 
-                    v-model="book.rating" 
-                    readonly 
-                    size="12px"
-                    color="#ffd21e"
-                    void-icon="star"
-                    void-color="#eee"
-                  />
+                  <van-rate v-model="book.rating" readonly size="12px" color="#ffd21e" void-icon="star" void-color="#eee" />
                 </div>
                 <div class="book-tags">
-                  <van-tag 
-                    v-for="tag in book.tags" 
-                    :key="tag" 
-                    plain
-                    size="small"
-                  >
+                  <van-tag v-for="tag in book.tags" :key="tag" plain size="small">
                     {{ tag }}
                   </van-tag>
                 </div>
                 <div class="book-meta">
                   <span class="listen-count">
-                    <van-icon name="play-circle-o" />{{ book.listenCount }}萬
+                    <van-icon name="play-circle-o" />
+                    {{ book.listenCount }}萬
                   </span>
                   <span class="duration">
-                    <van-icon name="clock-o" />{{ formatDuration(book.duration) }}
+                    <van-icon name="clock-o" />
+                    {{ formatDuration(book.duration) }}
                   </span>
                 </div>
               </div>
@@ -131,48 +74,27 @@
         <!-- 熱門書籍 -->
         <van-tab title="熱門">
           <div class="book-list">
-            <div 
-              v-for="book in hotBooks" 
-              :key="book.id" 
-              class="book-item"
-              @click="goToBookDetail(book.id)"
-            >
-              <van-image 
-                :src="book.cover" 
-                width="100%" 
-                height="150px"
-                fit="cover"
-                radius="8px"
-              />
+            <div v-for="book in hotBooks" :key="book.id" class="book-item" @click="goToBookDetail(book.id)">
+              <van-image :src="book.cover" width="100%" height="150px" fit="cover" radius="8px" />
               <div class="book-info">
                 <h3 class="book-title">{{ book.title }}</h3>
                 <p class="book-author">{{ book.author }}</p>
                 <div class="book-rating">
-                  <van-rate 
-                    v-model="book.rating" 
-                    readonly 
-                    size="12px"
-                    color="#ffd21e"
-                    void-icon="star"
-                    void-color="#eee"
-                  />
+                  <van-rate v-model="book.rating" readonly size="12px" color="#ffd21e" void-icon="star" void-color="#eee" />
                 </div>
                 <div class="book-tags">
-                  <van-tag 
-                    v-for="tag in book.tags" 
-                    :key="tag" 
-                    plain
-                    size="small"
-                  >
+                  <van-tag v-for="tag in book.tags" :key="tag" plain size="small">
                     {{ tag }}
                   </van-tag>
                 </div>
                 <div class="book-meta">
                   <span class="listen-count">
-                    <van-icon name="play-circle-o" />{{ book.listenCount }}萬
+                    <van-icon name="play-circle-o" />
+                    {{ book.listenCount }}萬
                   </span>
                   <span class="duration">
-                    <van-icon name="clock-o" />{{ formatDuration(book.duration) }}
+                    <van-icon name="clock-o" />
+                    {{ formatDuration(book.duration) }}
                   </span>
                 </div>
               </div>
@@ -183,48 +105,27 @@
         <!-- 最新書籍 -->
         <van-tab title="最新">
           <div class="book-list">
-            <div 
-              v-for="book in newBooks" 
-              :key="book.id" 
-              class="book-item"
-              @click="goToBookDetail(book.id)"
-            >
-              <van-image 
-                :src="book.cover" 
-                width="100%" 
-                height="150px"
-                fit="cover"
-                radius="8px"
-              />
+            <div v-for="book in newBooks" :key="book.id" class="book-item" @click="goToBookDetail(book.id)">
+              <van-image :src="book.cover" width="100%" height="150px" fit="cover" radius="8px" />
               <div class="book-info">
                 <h3 class="book-title">{{ book.title }}</h3>
                 <p class="book-author">{{ book.author }}</p>
                 <div class="book-rating">
-                  <van-rate 
-                    v-model="book.rating" 
-                    readonly 
-                    size="12px"
-                    color="#ffd21e"
-                    void-icon="star"
-                    void-color="#eee"
-                  />
+                  <van-rate v-model="book.rating" readonly size="12px" color="#ffd21e" void-icon="star" void-color="#eee" />
                 </div>
                 <div class="book-tags">
-                  <van-tag 
-                    v-for="tag in book.tags" 
-                    :key="tag" 
-                    plain
-                    size="small"
-                  >
+                  <van-tag v-for="tag in book.tags" :key="tag" plain size="small">
                     {{ tag }}
                   </van-tag>
                 </div>
                 <div class="book-meta">
                   <span class="listen-count">
-                    <van-icon name="play-circle-o" />{{ book.listenCount }}萬
+                    <van-icon name="play-circle-o" />
+                    {{ book.listenCount }}萬
                   </span>
                   <span class="duration">
-                    <van-icon name="clock-o" />{{ formatDuration(book.duration) }}
+                    <van-icon name="clock-o" />
+                    {{ formatDuration(book.duration) }}
                   </span>
                 </div>
               </div>
@@ -237,10 +138,10 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, computed, onMounted } from 'vue'
-import { Search, Tabs, Tab, Image, Tag, Rate, Icon } from 'vant'
-import { useRouter } from 'vue-router'
-import { BookService, type Book } from '../services/bookService'
+import { defineComponent, ref, computed, onMounted } from 'vue';
+import { Search, Tabs, Tab, Image, Tag, Rate, Icon } from 'vant';
+import { useRouter } from 'vue-router';
+import { BookService, type Book } from '../services/bookService';
 
 export default defineComponent({
   name: 'Home',
@@ -251,79 +152,79 @@ export default defineComponent({
     [Image.name]: Image,
     [Tag.name]: Tag,
     [Rate.name]: Rate,
-    [Icon.name]: Icon
+    [Icon.name]: Icon,
   },
   setup() {
-    const router = useRouter()
-    const searchValue = ref('')
-    const activeCategory = ref(0)
-    const showSearchPanel = ref(false)
-    const bookService = BookService.getInstance()
+    const router = useRouter();
+    const searchValue = ref('');
+    const activeCategory = ref(0);
+    const showSearchPanel = ref(false);
+    const bookService = BookService.getInstance();
 
     // 搜索相關
-    const searchResults = ref<Book[]>([])
-    const hotSearchTags = ref<string[]>(['科幻', '懸疑', '愛情', '歷史', '冒險'])
+    const searchResults = ref<Book[]>([]);
+    const hotSearchTags = ref<string[]>(['科幻', '懸疑', '愛情', '歷史', '冒險']);
 
     // 分類數據
-    const recommendedBooks = ref<Book[]>([])
-    const hotBooks = ref<Book[]>([])
-    const newBooks = ref<Book[]>([])
-    const loading = ref(true)
+    const recommendedBooks = ref<Book[]>([]);
+    const hotBooks = ref<Book[]>([]);
+    const newBooks = ref<Book[]>([]);
+    const loading = ref(true);
 
     // 格式化時間
     const formatDuration = (seconds: number): string => {
-      const minutes = Math.floor(seconds / 60)
-      const hours = Math.floor(minutes / 60)
-      const remainingMinutes = minutes % 60
-      
+      const minutes = Math.floor(seconds / 60);
+      const hours = Math.floor(minutes / 60);
+      const remainingMinutes = minutes % 60;
+
       if (hours > 0) {
-        return `${hours}小時${remainingMinutes}分鐘`
+        return `${hours}小時${remainingMinutes}分鐘`;
       }
-      return `${minutes}分鐘`
-    }
+      return `${minutes}分鐘`;
+    };
 
     // 搜索
     const onSearch = async (value: string) => {
       if (!value) {
-        searchResults.value = []
-        return
+        searchResults.value = [];
+        return;
       }
       try {
-        searchResults.value = await bookService.searchBooks(value)
+        searchResults.value = await bookService.searchBooks(value);
       } catch (error) {
-        console.error('搜索失敗:', error)
-        searchResults.value = []
+        console.error('搜索失敗:', error);
+        searchResults.value = [];
       }
-    }
+    };
 
     // 載入數據
     const loadData = async () => {
-      loading.value = true
+      loading.value = true;
       try {
         const [recommended, hot, newBooksData] = await Promise.all([
           bookService.getRecommendedBooks(),
           bookService.getHotBooks(),
-          bookService.getNewBooks()
-        ])
-        recommendedBooks.value = recommended
-        hotBooks.value = hot
-        newBooks.value = newBooksData
+          bookService.getNewBooks(),
+        ]);
+        recommendedBooks.value = recommended;
+        hotBooks.value = hot;
+        newBooks.value = newBooksData;
       } catch (error) {
-        console.error('載入數據失敗:', error)
+        console.error('載入數據失敗:', error);
       } finally {
-        loading.value = false
+        loading.value = false;
       }
-    }
+    };
 
     // 組件掛載時載入數據
     onMounted(() => {
-      loadData()
-    })
+      loadData();
+    });
 
     // 跳轉到書籍詳情
     const goToBookDetail = (bookId: number) => {
-      router.push({ name: 'bookDetail', params: { id: bookId } })
-    }
+      router.push({ name: 'bookDetail', params: { id: bookId } });
+    };
 
     return {
       searchValue,
@@ -337,16 +238,16 @@ export default defineComponent({
       loading,
       onSearch,
       goToBookDetail,
-      formatDuration
-    }
-  }
-})
+      formatDuration,
+    };
+  },
+});
 </script>
 
 <style lang="scss">
 .home-page {
   padding: 16px;
-  
+
   .top-nav {
     margin-bottom: 16px;
   }
@@ -360,11 +261,11 @@ export default defineComponent({
     bottom: 0;
     background: #fff;
     z-index: 1000;
-    
+
     .search-header {
       padding: 16px;
       border-bottom: 1px solid #eee;
-      
+
       .van-icon {
         font-size: 24px;
         color: #333;
@@ -373,7 +274,7 @@ export default defineComponent({
 
     .search-content {
       padding: 16px;
-      
+
       .search-suggestions {
         h3 {
           margin: 0 0 12px 0;
@@ -393,15 +294,19 @@ export default defineComponent({
           align-items: center;
           padding: 12px 0;
           border-bottom: 1px solid #eee;
-          
+
           &:last-child {
             border-bottom: none;
           }
-
+          .van-image {
+            width: 200px !important;
+            height: 150px !important;
+            object-fit: cover;
+          }
           .book-info {
             flex: 1;
             padding-left: 12px;
-            
+
             .book-title {
               font-size: 16px;
               font-weight: 600;
@@ -439,21 +344,21 @@ export default defineComponent({
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
     gap: 16px;
-    
+
     .book-item {
       border-radius: 8px;
       overflow: hidden;
       background: #fff;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
       transition: transform 0.2s;
-      
+
       &:active {
         transform: scale(0.98);
       }
-      
+
       .book-info {
         padding: 12px;
-        
+
         .book-title {
           font-size: 16px;
           font-weight: 600;
@@ -465,7 +370,7 @@ export default defineComponent({
           -webkit-box-orient: vertical;
           overflow: hidden;
         }
-        
+
         .book-author {
           font-size: 14px;
           color: #666;
@@ -478,7 +383,7 @@ export default defineComponent({
 
         .book-tags {
           margin: 4px 0;
-          
+
           .van-tag {
             margin-right: 4px;
             margin-bottom: 4px;
@@ -490,12 +395,12 @@ export default defineComponent({
           justify-content: space-between;
           align-items: center;
           margin-top: 8px;
-          
+
           .listen-count,
           .duration {
             font-size: 12px;
             color: #666;
-            
+
             .van-icon {
               font-size: 12px;
               margin-right: 4px;

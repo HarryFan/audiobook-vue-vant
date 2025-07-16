@@ -182,7 +182,7 @@ export default {
       sortValue.value = 'newest';
       viewAllNew.value = true;
     };
-    
+
     // 跳轉到書籍詳情
     const goToBookDetail = bookId => {
       router.push({ name: 'bookDetail', params: { id: bookId.toString() } });
@@ -200,7 +200,8 @@ export default {
     const handleImageError = event => {
       const img = event.target;
       // 使用一個簡單的 SVG 作為替代圖片
-      img.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMTAiIGhlaWdodD0iMzE1IiB2aWV3Qm94PSIwIDAgMjEwIDMxNSIgZmlsbD0iI2YwZjBmMCI+CiAgPHJlY3Qgd2lkdGg9IjIxMCIgaGVpZ2h0PSIzMTUiIGZpbGw9IiNlZWVlZWUiLz4KICA8dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE0IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBhbGlnbm1lbnQtYmFzZWxpbmU9Im1pZGRsZSIgZmlsbD0iIzk5OSI+Tm8gQ292ZXI8L3RleHQ+Cjwvc3ZnPg==';
+      img.src =
+        'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMTAiIGhlaWdodD0iMzE1IiB2aWV3Qm94PSIwIDAgMjEwIDMxNSIgZmlsbD0iI2YwZjBmMCI+CiAgPHJlY3Qgd2lkdGg9IjIxMCIgaGVpZ2h0PSIzMTUiIGZpbGw9IiNlZWVlZWUiLz4KICA8dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE0IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBhbGlnbm1lbnQtYmFzZWxpbmU9Im1pZGRsZSIgZmlsbD0iIzk5OSI+Tm8gQ292ZXI8L3RleHQ+Cjwvc3ZnPg==';
       img.onerror = null; // 防止無限循環
     };
 
@@ -392,17 +393,47 @@ export default {
 /* 書籍網格 */
 .book-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
+  grid-template-columns: 1fr;
+  gap: 16px;
   padding: 12px 16px;
+  margin: 0 auto;
+  max-width: 800px;
+}
+
+.book-item {
+  display: flex;
+  gap: 12px;
+  background: var(--white);
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.book-item:active {
+  transform: translateY(1px);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
 }
 
 .book-card {
   background: var(--white);
-  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.04);
-  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  position: relative;
+  border: 1px solid var(--gray-3);
+}
+
+.book-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .book-card:active {
@@ -411,12 +442,14 @@ export default {
 }
 
 .book-cover {
-  width: 100%;
-  height: 0;
-  padding-bottom: 140%;
+  width: 80px;
+  height: 120px;
+  flex-shrink: 0;
   position: relative;
   overflow: hidden;
   background-color: var(--gray-1);
+  border-radius: 6px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .cover-image {
@@ -434,22 +467,24 @@ export default {
 }
 
 .book-title {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 500;
   color: var(--gray-8);
-  margin: 0 0 4px;
+  margin: 0 0 6px;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
   line-height: 1.4;
-  height: 2.8em;
+  word-break: break-word;
+  hyphens: auto;
+  padding-right: 8px;
 }
 
 .book-author {
-  font-size: 12px;
-  color: var(--gray-6);
-  margin: 0 0 6px;
+  font-size: 13px;
+  color: var(--gray-7);
+  margin: 0 0 8px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -459,8 +494,9 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--gray-6);
+  margin-top: auto;
 }
 
 /* 區塊標題 */
@@ -549,12 +585,22 @@ export default {
 
 /* 水平卡片 */
 .book-card-horizontal {
-  flex: 0 0 120px;
+  flex: 0 0 140px;
   background: var(--white);
-  border-radius: 8px;
+  border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.04);
-  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  position: relative;
+  border: 1px solid var(--gray-3);
+}
+
+.book-card-horizontal:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .book-card-horizontal:active {
@@ -590,7 +636,7 @@ export default {
   display: flex;
   align-items: center;
   gap: 2px;
-  color: #FFB800;
+  color: #ffb800;
   font-size: 11px;
 }
 
@@ -608,27 +654,48 @@ export default {
 }
 
 /* 響應式調整 */
-@media (min-width: 400px) {
+@media (min-width: 600px) {
+  .book-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    padding: 16px;
+    max-width: 1200px;
+  }
+
+  .book-item {
+    padding: 16px;
+  }
+
+  .book-cover {
+    width: 90px;
+    height: 135px;
+  }
+}
+
+@media (min-width: 600px) {
   .book-grid {
     grid-template-columns: repeat(3, 1fr);
   }
-  
-  .book-card-horizontal {
-    flex: 0 0 140px;
+}
+
+@media (min-width: 900px) {
+  .book-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (min-width: 1200px) {
+  .book-grid {
+    grid-template-columns: repeat(5, 1fr);
   }
 }
 
 @media (min-width: 640px) {
-  .book-grid {
-    grid-template-columns: repeat(4, 1fr);
-    padding: 16px 24px;
-  }
-  
   .section {
     margin: 24px 16px;
     border-radius: 12px;
   }
-  
+
   .book-scroll {
     padding: 0 24px 24px;
   }
@@ -636,18 +703,33 @@ export default {
 
 /* 動畫效果 */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.book-card, .book-card-horizontal {
+.book-card,
+.book-card-horizontal {
   animation: fadeIn 0.3s ease-out forwards;
   opacity: 0;
 }
 
 /* 為每個卡片添加延遲動畫 */
-.book-card:nth-child(1) { animation-delay: 0.05s; }
-.book-card:nth-child(2) { animation-delay: 0.1s; }
-.book-card-horizontal:nth-child(1) { animation-delay: 0.15s; }
-.book-card-horizontal:nth-child(2) { animation-delay: 0.2s; }
+.book-card:nth-child(1) {
+  animation-delay: 0.05s;
+}
+.book-card:nth-child(2) {
+  animation-delay: 0.1s;
+}
+.book-card-horizontal:nth-child(1) {
+  animation-delay: 0.15s;
+}
+.book-card-horizontal:nth-child(2) {
+  animation-delay: 0.2s;
+}
 </style>
