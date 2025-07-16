@@ -1,229 +1,291 @@
-export interface Chapter {
-  id: number
-  title: string
-  duration: number
+export interface Book {
+  id: number;
+  title: string;
+  author: string;
+  cover: string;
+  description: string;
+  audioUrl: string;
+  duration: number; // in seconds
+  category: string;
+  tags: string[];
+  rating: number;
+  listenCount: number;
+  language: string;
+  totalTimeSecs: number;
+  urlLibrivox?: string;
+  urlRss?: string;
+  chapters?: BookChapter[];
 }
 
-export interface Book {
-  id: string | number
-  title: string
-  author: string
-  cover: string
-  coverUrl?: string // 兼容舊的 cover 屬性
-  publisher?: string
-  description: string
-  audioUrl: string
-  duration: number // 總時長（秒）
-  category?: string
-  tags?: string[]
-  rating: number
-  listenCount?: number
-  chapters?: Chapter[]
-  price?: number
+export interface BookChapter {
+  id: number;
+  title: string;
+  audioUrl: string;
+  duration: number; // in seconds
+  chapterNumber: number;
 }
 
 export class BookService {
-  private static instance: BookService
-  private books: Book[] = []
+  private static instance: BookService;
+  private books: Book[] = [];
 
   private constructor() {
-    // 整合來自 audiobooks.js 的數據
+    // 初始化內建模擬數據，使用從 mock-data.html 提取的真實書籍數據
     this.books = [
       {
-        id: '1',
+        id: 1,
         title: '與希林攜手同行',
         author: '是枝裕和',
         cover: 'https://cdn.readmoo.com/cover/bd/dbiakd4_210x315.jpg',
-        coverUrl: 'https://cdn.readmoo.com/cover/bd/dbiakd4_210x315.jpg',
-        publisher: '臉譜',
-        description: '生命似乎被創造了只有自己一個人無法完成的樣子。《與希林攜手同行》對我而言是非常重要的書，一本無法寄出的「情書」。——是枝裕和 日本國民大導演與演技派國民奶奶攜手完成的唯一著作盡窺導演與演員的相知相惜、影視前輩對後進的無私提攜母親對兒子比海還深的關愛、兒子對母親的倚賴與仰望...',
-        audioUrl: '/audio/googleStitchUI_demo.wav',
-        duration: 3600, // 1小時
-        category: '傳記',
-        tags: ['傳記', '電影', '人生'],
-        rating: 4.8,
-        listenCount: 1250,
-        price: 99,
-        chapters: [
-          { id: 1, title: '第一章', duration: 1800 },
-          { id: 2, title: '第二章', duration: 1800 }
-        ]
-      },
-      {
-        id: '2',
-        title: '這樣經營，餐廳才會賺：名顧問教你避開25個開店常見失敗原因，創造能長遠經營的獲利之道',
-        author: '須田光彥',
-        cover: 'https://cdn.readmoo.com/cover/63/8a51g76_210x315.jpg',
-        coverUrl: 'https://cdn.readmoo.com/cover/63/8a51g76_210x315.jpg',
-        publisher: '麥浩斯',
-        description: '「經營順利的餐廳各有其成功之道，但失敗的餐廳原因都大同小異」40 年餐飲業經驗、看過上萬間餐廳彙整的「不失敗」經營心法。',
-        audioUrl: '/audio/googleStitchUI_demo.wav',
-        duration: 7200, // 2小時
-        category: '商業',
-        tags: ['商業', '餐飲', '經營'],
-        rating: 4.9,
-        listenCount: 890,
-        price: 99,
-        chapters: [
-          { id: 1, title: '第一章', duration: 2400 },
-          { id: 2, title: '第二章', duration: 2400 },
-          { id: 3, title: '第三章', duration: 2400 }
-        ]
-      },
-      {
-        id: '3',
-        title: '歡愉俱樂部',
-        author: '茱諾．普拉',
-        cover: 'https://cdn.readmoo.com/cover/bf/a6egk6i_210x315.jpg?v=1615367649',
-        description: '你知道陰蒂高潮嗎？一般統計表明，70-80％的女性都是刺激這裡達到高潮，所以愛愛根本不一定要「插進去」？開啟你對性愛的新的想像！',
+        description: '生命似乎被創造了只有自己一個人無法完成的樣子。\n\n《與希林攜手同行》對我而言是非常重要的書，一本無法寄出的「情書」。——是枝裕和\n\n日本國民大導演與演技派國民奶奶攜手完成的唯一著作',
         audioUrl: '/src/audio/googleStitchUI_demo.wav',
-        duration: 150, // 2.5小時
-        category: '健康',
-        tags: ['健康', '性教育', '關係'],
+        duration: 4850,
+        category: '文學小說',
+        tags: ['日本文學', '電影', '傳記'],
+        rating: 4.8,
+        listenCount: 3580,
+        language: '中文',
+        totalTimeSecs: 4850,
+        chapters: [
+          { id: 101, title: '我與希林奶奶的相遇', audioUrl: '/src/audio/googleStitchUI_demo.wav', duration: 1250, chapterNumber: 1 },
+          { id: 102, title: '電影《山茶花女之戀》的創作歷程', audioUrl: '/src/audio/googleStitchUI_demo.wav', duration: 1800, chapterNumber: 2 },
+          { id: 103, title: '如何面對生命的終點', audioUrl: '/src/audio/googleStitchUI_demo.wav', duration: 1800, chapterNumber: 3 }
+        ]
+      },
+      {
+        id: 2,
+        title: '開一間只屬於你的餐廳',
+        author: '賈森・弗里德曼',
+        cover: 'https://cdn.readmoo.com/cover/mf/oucibo2_210x315.jpg',
+        description: '「經營順利的餐廳各有其成功之道，但失敗的餐廳原因都大同小異」\n40年餐飲業經驗、看過上萬間餐廳彙整的「不失敗」經營心法\n讓你從選址、菜單規畫、店面設計到行銷待客都不走冤枉路',
+        audioUrl: '/src/audio/googleStitchUI_demo.wav',
+        duration: 5420,
+        category: '商業理財',
+        tags: ['創業', '餐飲', '經營管理'],
+        rating: 4.9,
+        listenCount: 7210,
+        language: '中文',
+        totalTimeSecs: 5420,
+        chapters: [
+          { id: 201, title: '為什麼開餐廳', audioUrl: '/src/audio/googleStitchUI_demo.wav', duration: 1420, chapterNumber: 1 },
+          { id: 202, title: '餐廳定位與菜單設計', audioUrl: '/src/audio/googleStitchUI_demo.wav', duration: 2150, chapterNumber: 2 },
+          { id: 203, title: '餐飲經營的財務分析', audioUrl: '/src/audio/googleStitchUI_demo.wav', duration: 1850, chapterNumber: 3 }
+        ]
+      },
+      {
+        id: 3,
+        title: '愛撫取樂手冊',
+        author: '強納森・馬堤',
+        cover: 'https://cdn.readmoo.com/cover/oq/h50hwq3_210x315.jpg',
+        description: '你知道陰蒂高潮嗎？一般統計表明，70-80％的女性都是刺激這裡達到高潮，所以愛愛根本不一定要「插進去」？\n愛撫、按摩、口交、指交……甚至肛交，都還更爽呢！\n\n性愛≠插入\n開啟你對性愛的新的想像！',
+        audioUrl: '/src/audio/googleStitchUI_demo.wav',
+        duration: 4260,
+        category: '生活風格',
+        tags: ['兩性關係', '親密關係', '性教育'],
         rating: 4.6,
-        listenCount: 567
+        listenCount: 9520,
+        language: '中文',
+        totalTimeSecs: 4260,
+        chapters: [
+          { id: 301, title: '愛愛迷思與真相', audioUrl: '/src/audio/googleStitchUI_demo.wav', duration: 1380, chapterNumber: 1 },
+          { id: 302, title: '愛撫的技巧與步驟', audioUrl: '/src/audio/googleStitchUI_demo.wav', duration: 1450, chapterNumber: 2 },
+          { id: 303, title: '親密關係中的溝通', audioUrl: '/src/audio/googleStitchUI_demo.wav', duration: 1430, chapterNumber: 3 }
+        ]
       },
       {
         id: 4,
         title: '台北獨食主義',
-        author: '尼可拉斯, 黃安寶',
+        author: '黃惠偵',
         cover: 'https://cdn.readmoo.com/cover/a4/gcahi6h_210x315.jpg?v=0',
-        description: '探索台北獨自用餐的美食文化，發現一個人吃飯的樂趣與自在。從街頭小吃到精緻餐廳，帶你品味台北的獨食風景。',
+        description: '一人吃飯，不會是孤獨，那是沉澱自己的必需事。\n一人用餐，不會是尷尬，是療癒自己的幸福儀式。\n一人獨食，不會是寂寞，那是對生活的覓食探險。',
         audioUrl: '/src/audio/googleStitchUI_demo.wav',
-        duration: 120, // 2小時
-        category: '生活',
-        tags: ['美食', '台北', '生活'],
-        rating: 4.3,
-        listenCount: 723
+        duration: 3850,
+        category: '飲食',
+        tags: ['台北', '美食', '獨食'],
+        rating: 4.7,
+        listenCount: 6340,
+        language: '中文',
+        totalTimeSecs: 3850,
+        chapters: [
+          { id: 401, title: '獨食的哲學', audioUrl: '/src/audio/googleStitchUI_demo.wav', duration: 1250, chapterNumber: 1 },
+          { id: 402, title: '台北東區的隱藏美食', audioUrl: '/src/audio/googleStitchUI_demo.wav', duration: 1300, chapterNumber: 2 },
+          { id: 403, title: '台北西區的文青小店', audioUrl: '/src/audio/googleStitchUI_demo.wav', duration: 1300, chapterNumber: 3 }
+        ]
       },
       {
         id: 5,
-        title: '深度學習入門',
-        author: '李明華',
-        cover: 'https://via.placeholder.com/210x315/4A90E2/FFFFFF?text=深度學習',
-        description: '從零開始學習深度學習，包含神經網路基礎、卷積神經網路、循環神經網路等核心概念，適合初學者入門。',
+        title: '鹿皮筆記本',
+        author: '張亦絢',
+        cover: 'https://cdn.readmoo.com/cover/h4/r0fq1wg_210x315.jpg',
+        description: '誰的真誠能夠穿越時間？\n誰的真心能夠被世界善待？\n兩個在劇變年代的廢墟中尋找自我的靈魂，\n一段在遺忘與相認之間反覆糾葛的動人情誼。',
         audioUrl: '/src/audio/googleStitchUI_demo.wav',
-        duration: 300, // 5小時
-        category: '科技',
-        tags: ['程式設計', 'AI', '機器學習'],
-        rating: 4.7,
-        listenCount: 1456
+        duration: 5320,
+        category: '文學小說',
+        tags: ['台灣文學', '小說', '文學獎'],
+        rating: 4.5,
+        listenCount: 2980,
+        language: '中文',
+        totalTimeSecs: 5320,
+        chapters: [
+          { id: 501, title: '記憶裡的風景', audioUrl: '/src/audio/googleStitchUI_demo.wav', duration: 1720, chapterNumber: 1 },
+          { id: 502, title: '遺落的時光', audioUrl: '/src/audio/googleStitchUI_demo.wav', duration: 1830, chapterNumber: 2 },
+          { id: 503, title: '鹿皮筆記本的秘密', audioUrl: '/src/audio/googleStitchUI_demo.wav', duration: 1770, chapterNumber: 3 }
+        ]
       },
       {
         id: 6,
-        title: '心理學與日常生活',
-        author: '王心理',
-        cover: 'https://via.placeholder.com/210x315/50C878/FFFFFF?text=心理學',
-        description: '探討心理學在日常生活中的應用，從認知偏誤到情緒管理，幫助你更好地理解自己和他人。',
+        title: '管他的，做自己',
+        author: '盧貝松',
+        cover: 'https://cdn.readmoo.com/cover/h7/hmhw6kd_210x315.jpg',
+        description: '真實的自己，遠比想像中更了不起！\n法國名導盧貝松首部自傳，\n獻給每一個曾被說「不可能」的你！',
         audioUrl: '/src/audio/googleStitchUI_demo.wav',
-        duration: 200, // 3.3小時
-        category: '心理',
-        tags: ['心理學', '自我成長', '人際關係'],
-        rating: 4.5,
-        listenCount: 934
+        duration: 4800,
+        category: '人文社科',
+        tags: ['電影', '傳記', '藝術'],
+        rating: 4.7,
+        listenCount: 4570,
+        language: '中文',
+        totalTimeSecs: 4800,
+        chapters: [
+          { id: 601, title: '從小說到電影', audioUrl: '/src/audio/googleStitchUI_demo.wav', duration: 1600, chapterNumber: 1 },
+          { id: 602, title: '創作路上的挑戰', audioUrl: '/src/audio/googleStitchUI_demo.wav', duration: 1600, chapterNumber: 2 },
+          { id: 603, title: '成為自己的導演', audioUrl: '/src/audio/googleStitchUI_demo.wav', duration: 1600, chapterNumber: 3 }
+        ]
       },
       {
         id: 7,
-        title: '投資理財新手指南',
-        author: '財富大師',
-        cover: 'https://via.placeholder.com/210x315/FFD700/000000?text=投資理財',
-        description: '適合新手的投資理財指南，從基本概念到實戰策略，教你如何開始你的投資之路。',
+        title: '牙套微笑日記',
+        author: '蕾娜・塔吉邁爾',
+        cover: 'https://cdn.readmoo.com/cover/jb/qpkqrgg_210x315.jpg',
+        description: '陪伴成長風暴的暖心佳作\n圖像小說界的冠軍作品 美國樂學集團圖像小說專業出版品牌Graphix重量級作家\n1,600,000本系列暢銷佳作',
         audioUrl: '/src/audio/googleStitchUI_demo.wav',
-        duration: 250, // 4.2小時
-        category: '財經',
-        tags: ['投資', '理財', '股票'],
-        rating: 4.4,
-        listenCount: 1123
-      },
-      {
-        id: 8,
-        title: '極簡生活的藝術',
-        author: '簡單生活家',
-        cover: 'https://via.placeholder.com/210x315/F0F0F0/333333?text=極簡生活',
-        description: '學習極簡生活的哲學與實踐方法，減少物質負擔，專注於真正重要的事物。',
-        audioUrl: '/src/audio/googleStitchUI_demo.wav',
-        duration: 160, // 2.7小時
-        category: '生活',
-        tags: ['極簡', '生活方式', '斷捨離'],
-        rating: 4.6,
-        listenCount: 678
-      },
-      {
-        id: 9,
-        title: '創業家的思維',
-        author: '創業導師',
-        cover: 'https://via.placeholder.com/210x315/FF6B6B/FFFFFF?text=創業思維',
-        description: '分析成功創業家的思維模式，從創意發想想到商業模式設計，培養創業家精神。',
-        audioUrl: '/src/audio/googleStitchUI_demo.wav',
-        duration: 220, // 3.7小時
-        category: '商業',
-        tags: ['創業', '商業', '領導力'],
-        rating: 4.8,
-        listenCount: 1567
-      },
-      {
-        id: 10,
-        title: '冥想與正念練習',
-        author: '禪修大師',
-        cover: 'https://via.placeholder.com/210x315/9B59B6/FFFFFF?text=冥想正念',
-        description: '學習冥想與正念的基本技巧，在忙碌的現代生活中找到內心的平靜與專注。',
-        audioUrl: '/src/audio/googleStitchUI_demo.wav',
-        duration: 180, // 3小時
-        category: '心靈',
-        tags: ['冥想', '正念', '心靈成長'],
-        rating: 4.7,
-        listenCount: 812
+        duration: 3500,
+        category: '漫畫繪本',
+        tags: ['圖像小說', '成長', '青少年'],
+        rating: 5.0,
+        listenCount: 8450,
+        language: '中文',
+        totalTimeSecs: 3500,
+        chapters: [
+          { id: 701, title: '牙套與自信', audioUrl: '/src/audio/googleStitchUI_demo.wav', duration: 1150, chapterNumber: 1 },
+          { id: 702, title: '學校生活的挑戰', audioUrl: '/src/audio/googleStitchUI_demo.wav', duration: 1200, chapterNumber: 2 },
+          { id: 703, title: '朋友與成長', audioUrl: '/src/audio/googleStitchUI_demo.wav', duration: 1150, chapterNumber: 3 }
+        ]
       }
-    ]
+    ];
   }
 
   public static getInstance(): BookService {
     if (!BookService.instance) {
-      BookService.instance = new BookService()
+      BookService.instance = new BookService();
     }
-    return BookService.instance
+    return BookService.instance;
   }
-
-  getBooksByCategory(category: string): Book[] {
-    return this.books.filter(book => book.category === category)
-  }
-
-  getBooksByTag(tag: string): Book[] {
-    return this.books.filter(book => book.tags?.includes(tag) || false)
-  }
-
-  getPopularBooks(limit: number = 10): Book[] {
-    return [...this.books]
-      .sort((a, b) => (b.listenCount || 0) - (a.listenCount || 0))
-      .slice(0, limit)
-  }
-
-  getNewReleases(limit: number = 10): Book[] {
-    return [...this.books]
-      .sort((a, b) => (b.duration || 0) - (a.duration || 0))
-      .slice(0, limit)
-  }
-
-  getRecommendedBooks(): Book[] {
-    return this.books.filter(book => book.rating >= 4.5).slice(0, 10)
-  }
-
-  getBookById(id: string | number): Book | undefined {
-    return this.books.find(book => book.id.toString() === id.toString())
-  }
-
-  // 取得所有書籍
+  
+  /**
+   * 獲取所有書籍
+   */
   getAllBooks(): Book[] {
-    return this.books
+    return this.books;
+  }
+  
+  /**
+   * 按類別獲取書籍
+   */
+  getBooksByCategory(category: string): Book[] {
+    return this.books.filter(book => book.category === category);
+  }
+  
+  /**
+   * 按 ID 獲取書籍
+   */
+  getBookById(id: number): Book | null {
+    const book = this.books.find(book => book.id === id);
+    return book || null;
+  }
+  
+  /**
+   * 按標籤獲取書籍
+   */
+  getBooksByTag(tag: string): Book[] {
+    return this.books.filter(book => book.tags && book.tags.includes(tag));
   }
 
+  /**
+   * 獲取推薦書籍（隨機選擇2本）
+   */
+  getRecommendedBooks(): Book[] {
+    return this.shuffleArray([...this.books]).slice(0, 2);
+  }
+
+  /**
+   * 獲取熱門書籍（按照收聽次數排序）
+   */
+  getPopularBooks(): Book[] {
+    return [...this.books].sort((a, b) => b.listenCount - a.listenCount).slice(0, 10);
+  }
+  
+  /**
+   * getHotBooks 方法（兼容舊程式碼，是 getPopularBooks 的別名）
+   */
+  getHotBooks(): Book[] {
+    return this.getPopularBooks();
+  }
+
+  /**
+   * 獲取新發布的書籍（按ID降序排列）
+   */
+  getNewReleases(): Book[] {
+    return [...this.books].sort((a, b) => b.id - a.id).slice(0, 10);
+  }
+  
+  /**
+   * 獲取新書（兼容舊程式碼，是 getNewReleases 的別名）
+   */
+  getNewBooks(): Book[] {
+    return this.getNewReleases();
+  }
+  
+  /**
+   * 搜索書籍（標題、作者、標籤）
+   */
   searchBooks(keyword: string): Book[] {
-    return this.books.filter(book =>
-      book.title.includes(keyword) ||
-      book.author.includes(keyword) ||
-      (book.tags?.some(tag => tag.includes(keyword)) || false)
-    )
+    if (!keyword || keyword.trim() === '') {
+      return [];
+    }
+    
+    const lowercaseKeyword = keyword.toLowerCase();
+    
+    return this.books.filter(book => {
+      const titleMatch = book.title.toLowerCase().includes(lowercaseKeyword);
+      const authorMatch = book.author.toLowerCase().includes(lowercaseKeyword);
+      const tagMatch = book.tags && book.tags.some(tag => 
+        tag.toLowerCase().includes(lowercaseKeyword)
+      );
+      
+      return titleMatch || authorMatch || tagMatch;
+    });
+  }
+
+  /**
+   * 獲取書籍章節
+   */
+  getBookChapters(bookId: number): BookChapter[] {
+    const book = this.getBookById(bookId);
+    return book?.chapters || [];
+  }
+  
+  /**
+   * 打亂數組順序（用於隨機推薦）
+   */
+  private shuffleArray<T>(array: T[]): T[] {
+    const newArray = [...array];
+    for (let i = newArray.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+    }
+    return newArray;
   }
 }
 
-export const bookService = BookService.getInstance()
+export const bookService = BookService.getInstance();

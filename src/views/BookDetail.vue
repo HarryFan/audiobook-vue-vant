@@ -1,240 +1,256 @@
 <template>
   <div class="book-detail">
-    <van-loading v-if="loading" type="spinner" color="#1989fa" />
-    
-    <div v-else-if="book">
-      <div class="book-header">
-        <van-icon name="arrow-left" @click="handleBack" />
-        <h1>{{ book.title }}</h1>
-      </div>
+    <van-nav-bar
+      title="書籍詳情"
+      left-text="返回"
+      left-arrow
+      @click-left="goBack"
+    />
 
-      <van-nav-bar
-        title="書籍詳情"
-        left-text="返回"
-        left-arrow
-        @click-left="handleBack"
-      />
-
+    <div class="book-content">
       <div class="book-cover">
-        <img :src="book.coverUrl" alt="書籍封面" />
+        <van-image :src="book.cover" width="100%" height="200px" fit="cover" radius="8px" />
       </div>
 
       <div class="book-info">
+        <h1 class="book-title">{{ book.title }}</h1>
+        <p class="book-author">作者：{{ book.author }}</p>
+        <div class="book-rating">
+          <van-rate v-model="book.rating" readonly size="16px" color="#ffd21e" void-icon="star" void-color="#eee" />
+          <span class="rating-count">({{ book.rating }})</span>
+        </div>
+
         <div class="book-meta">
-          <div class="book-author">作者：{{ book.author }}</div>
-          <div class="book-duration">
-            時長：{{ formatDuration(book.duration || 0) }}
-          </div>
+          <span class="listen-count">
+            <van-icon name="play-circle-o" />{{ book.listenCount }}萬
+          </span>
+          <span class="duration">
+            <van-icon name="clock-o" />{{ formatDuration(book.duration) }}
+          </span>
         </div>
 
         <div class="book-description">
-          <div class="description-header">
-            <h2>簡介</h2>
-            <van-icon 
-              :name="showFullDescription ? 'arrow-up' : 'arrow-down'" 
-              @click="toggleDescription"
-            />
-          </div>
-          <div class="description-content" :class="{ 'show-full': showFullDescription }">
-            <p>{{ book.description }}</p>
-          </div>
+          <h3>書籍簡介</h3>
+          <p>{{ book.description }}</p>
         </div>
 
-      <div class="book-controls">
-        <van-button 
-          type="primary" 
-          block 
-          @click="startPlaying"
-        >
-          <van-icon name="play-circle-o" />立即播放
-        </van-button>
-      </div>
-
-        <div class="chapters-section">
-          <h2>章節列表</h2>
-          <van-collapse v-model="activeNames">
-            <van-collapse-item 
-              v-for="chapter in book.chapters || []" 
-              :key="chapter.id" 
-              :name="chapter.id"
+        <div class="book-tags">
+          <h3>標籤</h3>
+          <div class="tag-list">
+            <van-tag
+              v-for="tag in book.tags"
+              :key="tag"
+              plain
+              size="small"
             >
-              <template #title>
-                <div class="chapter-title">
-                  <span>{{ chapter.title }}</span>
-                  <span class="chapter-duration">{{ formatDuration(chapter.duration) }}</span>
-                </div>
-              </template>
-              <div class="chapter-content">
-                <van-button 
-                  type="primary" 
-                  size="small" 
-                  @click="playChapter(chapter)"
-                >
-                  播放
-                </van-button>
-              </div>
-            </van-collapse-item>
-          </van-collapse>
+              {{ tag }}
+            </van-tag>
+          </div>
+        </div>
+
+        <div class="book-controls">
+          <van-button
+            type="primary"
+            block
+            @click="startPlaying"
+          >
+            <van-icon name="play-circle-o" />立即播放
+          </van-button>
         </div>
       </div>
-    </div>
-    
-    <div v-else class="error-state">
-      <p>書籍不存在或加載失敗</p>
-      <van-button @click="handleBack">返回</van-button>
     </div>
   </div>
 </template>
 
-<script setup>
-import { ref, onMounted } from 'vue'
+<script lang="ts" setup>
+import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { NavBar, Icon, Button, Collapse, CollapseItem, Loading } from 'vant'
-import BookService from '@/services/bookService'
+// Vant 组件在全局注册，无需单独导入
+import { BookService, type Book } from '../services/bookService'
 
-const route = useRoute()
 const router = useRouter()
+const route = useRoute()
 const bookService = BookService.getInstance()
-const bookId = route.params.id
-const book = ref(null)
-const loading = ref(true)
-const showFullDescription = ref(false)
-const activeNames = ref(['1'])
 
-// 獲取書籍詳情
-const getBookDetail = async () => {
+// 從路由參數獲取書籍ID
+const bookId = computed(() => {
+  const id = route.params.id
+  if (typeof id === 'string') {
+    const parsedId = parseInt(id)
+    return isNaN(parsedId) ? 0 : parsedId
+  }
+  return 0
+})
+
+// 書籍數據
+const book = ref<Book>({
+  id: 0,
+  title: '載入中...',
+  author: '',
+  cover: 'https://via.placeholder.com/150',
+  description: '',
+  audioUrl: '',
+  duration: 0,
+  category: '',
+  tags: [],
+  rating: 0,
+  listenCount: 0,
+  language: '',
+  totalTimeSecs: 0,
+  urlLibrivox: '',
+  urlRss: ''
+})
+const loading = ref(true)
+
+// 載入書籍數據
+const loadBook = async () => {
+  const id = bookId.value
+  if (id <= 0) return
+
   loading.value = true
   try {
-    const data = await bookService.getBookById(bookId)
-    book.value = data
+    const bookData = await bookService.getBookById(id)
+    if (bookData) {
+      book.value = bookData
+    }
   } catch (error) {
-    console.error('獲取書籍詳情失敗:', error)
+    console.error('載入書籍失敗:', error)
   } finally {
     loading.value = false
   }
 }
 
+// 組件掛載時載入數據
+onMounted(() => {
+  loadBook()
+})
+
 // 格式化時間
-const formatDuration = (seconds) => {
-  const hours = Math.floor(seconds / 3600)
-  const minutes = Math.floor((seconds % 3600) / 60)
-  const remainingSeconds = seconds % 60
+const formatDuration = (seconds: number): string => {
+  const minutes = Math.floor(seconds / 60)
+  const hours = Math.floor(minutes / 60)
+  const remainingMinutes = minutes % 60
 
-  return `${hours}:${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`
-}
-
-// 播放章節
-const playChapter = (chapter) => {
-  console.log('播放章節:', chapter)
+  if (hours > 0) {
+    return `${hours}小時${remainingMinutes}分鐘`
+  }
+  return `${minutes}分鐘`
 }
 
 // 返回上一頁
-const handleBack = () => {
+const goBack = () => {
   router.back()
-}
-
-// 切換描述顯示
-const toggleDescription = () => {
-  showFullDescription.value = !showFullDescription.value
 }
 
 // 開始播放
 const startPlaying = () => {
-  console.log('開始播放書籍:', book.value)
+  if (book.value.audioUrl) {
+    router.push({
+      name: 'player',
+      query: {
+        bookTitle: book.value.title,
+        authorName: book.value.author,
+        bookCover: book.value.cover,
+        audioSrc: book.value.audioUrl
+      }
+    })
+  }
 }
 
-// 初始化數據
-onMounted(() => {
-  getBookDetail()
-})
+// 在 setup 語法糖中，所有變量和函數都會自動暴露給模板
 </script>
 
-<style scoped>
+<style lang="scss">
 .book-detail {
-  padding: 16px;
-}
-
-.book-cover {
-  width: 100%;
-  max-height: 300px;
-  overflow: hidden;
-  margin-bottom: 16px;
-}
-
-.book-cover img {
-  width: 100%;
-  height: auto;
-  object-fit: cover;
-}
-
-.book-info {
-  padding: 16px;
-  background: #fff;
-  border-radius: 8px;
-  margin-bottom: 16px;
-}
-
-.book-info h2 {
-  font-size: 24px;
-  margin-bottom: 8px;
-}
-
-.author {
-  font-size: 16px;
-  color: #666;
-  margin-bottom: 16px;
-}
-
-.description {
-  font-size: 14px;
-  color: #333;
-  margin-bottom: 16px;
-  line-height: 1.5;
-}
-
-.description.truncated {
-  max-height: 60px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-}
-
-.book-controls {
-  margin: 16px 0;
-}
-
-.book-stats {
+  padding: 0 16px 150px 16px;
+  min-height: 100vh;
   display: flex;
-  justify-content: space-around;
-  margin-top: 16px;
-}
+  flex-direction: column;
 
-.stat-item {
-  text-align: center;
-}
+  .book-content {
+    flex: 1;
+    margin-top: 16px;
 
-.stat-value {
-  font-size: 24px;
-  font-weight: bold;
-  color: #07c160;
-}
+    .book-cover {
+      margin-bottom: 16px;
+    }
 
-.stat-label {
-  font-size: 14px;
-  color: #666;
-}
+    .book-info {
+      .book-title {
+        font-size: 24px;
+        font-weight: 600;
+        margin: 16px 0;
+        color: #333;
+      }
 
-.chapters {
-  margin-top: 16px;
-}
+      .book-author {
+        font-size: 16px;
+        color: #666;
+        margin-bottom: 16px;
+      }
 
-.chapter-info {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px;
-  border-top: 1px solid #eee;
+      .book-rating {
+        display: flex;
+        align-items: center;
+        margin-bottom: 16px;
+      }
+
+      .rating-count {
+        margin-left: 8px;
+        color: #666;
+      }
+
+      .book-meta {
+        display: flex;
+        gap: 16px;
+        margin-bottom: 16px;
+        color: #666;
+      }
+
+      .book-description {
+        margin-bottom: 16px;
+
+        h3 {
+          margin: 0 0 8px 0;
+          font-size: 18px;
+          color: #333;
+        }
+
+        p {
+          margin: 0;
+          color: #666;
+          line-height: 1.5;
+        }
+      }
+
+      .book-tags {
+        margin-bottom: 16px;
+
+        h3 {
+          margin: 0 0 8px 0;
+          font-size: 18px;
+          color: #333;
+        }
+
+        .tag-list {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+        }
+      }
+
+      .book-controls {
+        margin-top: 32px;
+
+        .van-button {
+          border-radius: 8px;
+
+          .van-icon {
+            margin-right: 8px;
+          }
+        }
+      }
+    }
+  }
 }
 </style>

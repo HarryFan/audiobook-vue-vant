@@ -1,20 +1,12 @@
 <template>
   <div class="discover-page">
     <!-- 頂部導航 -->
-    <van-nav-bar
-      title="發現好書"
-      left-arrow
-      @click-left="handleBack"
-    />
-    
+    <van-nav-bar title="發現好書" left-arrow @click-left="handleBack" />
+
     <!-- 分類標籤 -->
     <div class="category-tabs">
       <van-tabs v-model:active="activeCategory" swipeable>
-        <van-tab 
-          v-for="category in categories" 
-          :key="category.id" 
-          :title="category.name"
-        >
+        <van-tab v-for="category in categories" :key="category.id" :title="category.name">
           <!-- 篩選選項 -->
           <div class="filter-options">
             <van-dropdown-menu>
@@ -22,57 +14,26 @@
               <van-dropdown-item v-model="filterValue" :options="filterOptions" />
             </van-dropdown-menu>
           </div>
-          
+
           <!-- 書籍列表 -->
           <div class="book-grid">
             <template v-if="loading">
               <app-loading text="載入中..." />
             </template>
             <template v-else-if="filteredBooks.length === 0">
-              <empty-state 
-                text="暫無相關書籍" 
-                icon="ion:book-outline"
-                :showButton="true"
-                buttonText="返回全部"
-                @buttonClick="resetFilters"
-              />
+              <empty-state text="暫無相關書籍" icon="ion:book-outline" :showButton="true" buttonText="返回全部" @buttonClick="resetFilters" />
             </template>
             <template v-else>
-              <div 
-                v-for="book in filteredBooks" 
-                :key="book.id" 
-                class="book-card"
-                @click="goToBookDetail(book.id)"
-              >
-                <van-image 
-                  :src="book.cover" 
-                  width="100%" 
-                  height="120px"
-                  fit="cover"
-                  radius="8px"
-                  lazy-load
-                />
+              <div v-for="book in filteredBooks" :key="book.id" class="book-card" @click="goToBookDetail(book.id)">
+                <div class="book-cover">
+                  <img :src="book.cover" :alt="book.title" @error="handleImageError" class="cover-image" />
+                </div>
                 <div class="book-info">
                   <h3 class="book-title">{{ book.title }}</h3>
                   <p class="book-author">{{ book.author }}</p>
-                  <div class="book-rating">
-                    <van-rate 
-                      v-model="book.rating" 
-                      readonly 
-                      size="12px"
-                      color="#ffd21e"
-                      void-icon="star"
-                      void-color="#eee"
-                    />
-                  </div>
-                  <div class="book-tags">
-                    <van-tag 
-                      plain
-                      size="small"
-                      type="primary"
-                    >
-                      {{ book.category }}
-                    </van-tag>
+                  <div class="book-meta">
+                    <span class="book-category">{{ book.category }}</span>
+                    <span class="book-duration">{{ formatDuration(book.duration) }}</span>
                   </div>
                 </div>
               </div>
@@ -81,64 +42,50 @@
         </van-tab>
       </van-tabs>
     </div>
-    
+
     <!-- 熱門推薦 -->
-    <div class="hot-recommend" v-if="!loading && activeCategory === 0">
-      <div class="section-title">
-        <h2>熱門推薦</h2>
-        <span class="view-all" @click="viewAllHot">查看全部</span>
+    <div class="section" v-if="!loading && activeCategory === 0">
+      <div class="section-header">
+        <h3>熱門推薦</h3>
+        <span class="view-all" @click="handleViewAllHot">查看全部</span>
       </div>
-      <div class="horizontal-scroll">
-        <div 
-          v-for="book in hotBooks" 
-          :key="book.id" 
-          class="hot-book-card"
-          @click="goToBookDetail(book.id)"
-        >
-          <van-image 
-            :src="book.cover" 
-            width="100px" 
-            height="100px"
-            fit="cover"
-            radius="8px"
-            lazy-load
-          />
-          <h4 class="book-title">{{ book.title }}</h4>
+      <div class="book-scroll">
+        <div v-for="book in hotBooks" :key="'hot-' + book.id" class="book-card-horizontal" @click="goToBookDetail(book.id)">
+          <div class="book-cover">
+            <img :src="book.cover" :alt="book.title" @error="handleImageError" class="cover-image" />
+          </div>
+          <div class="book-info">
+            <h4 class="book-title">{{ book.title }}</h4>
+            <p class="book-author">{{ book.author }}</p>
+            <div class="book-meta">
+              <span class="book-category">{{ book.category }}</span>
+              <span class="book-rating">
+                <van-rate v-model="book.rating" readonly allow-half size="12" />
+                {{ book.rating }}
+              </span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
-    
-    <!-- 最新上架 -->
-    <div class="new-arrivals" v-if="!loading && activeCategory === 0">
-      <div class="section-title">
-        <h2>最新上架</h2>
-        <span class="view-all" @click="viewAllNew">查看全部</span>
+
+    <!-- 新書上架 -->
+    <div class="section" v-if="!loading && activeCategory === 0">
+      <div class="section-header">
+        <h3>新書上架</h3>
+        <span class="view-all" @click="handleViewAllNew">查看全部</span>
       </div>
-      <div class="book-list">
-        <div 
-          v-for="book in newBooks.slice(0, 3)" 
-          :key="book.id" 
-          class="new-book-item"
-          @click="goToBookDetail(book.id)"
-        >
-          <van-image 
-            :src="book.cover" 
-            width="80px" 
-            height="80px"
-            fit="cover"
-            radius="8px"
-            lazy-load
-          />
-          <div class="book-details">
-            <h3 class="book-title">{{ book.title }}</h3>
+      <div class="book-scroll">
+        <div v-for="book in newBooks" :key="'new-' + book.id" class="book-card-horizontal" @click="goToBookDetail(book.id)">
+          <div class="book-cover">
+            <img :src="book.cover" :alt="book.title" @error="handleImageError" class="cover-image" />
+          </div>
+          <div class="book-info">
+            <h4 class="book-title">{{ book.title }}</h4>
             <p class="book-author">{{ book.author }}</p>
             <div class="book-meta">
-              <span class="listen-count">
-                <van-icon name="play-circle-o" />{{ book.listenCount }}萬
-              </span>
-              <span class="duration">
-                <van-icon name="clock-o" />{{ formatDuration(book.duration) }}
-              </span>
+              <span class="book-category">{{ book.category }}</span>
+              <span class="book-duration">{{ formatDuration(book.duration) }}</span>
             </div>
           </div>
         </div>
@@ -147,314 +94,559 @@
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent, ref, computed, onMounted } from 'vue'
-import { NavBar, Tabs, Tab, Image, Tag, Rate, Icon, DropdownMenu, DropdownItem } from 'vant'
-import { useRouter } from 'vue-router'
-import BookService, { Book } from '../services/bookService'
-import AppLoading from '../components/Loading.vue'
-import EmptyState from '../components/EmptyState.vue'
+<script>
+import { ref, computed, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
+import { BookService } from '../services/bookService';
+import AppLoading from '../components/Loading.vue';
+import EmptyState from '../components/EmptyState.vue';
 
-export default defineComponent({
+export default {
   name: 'Discover',
   components: {
-    [NavBar.name]: NavBar,
-    [Tabs.name]: Tabs,
-    [Tab.name]: Tab,
-    [Image.name]: Image,
-    [Tag.name]: Tag,
-    [Rate.name]: Rate,
-    [Icon.name]: Icon,
-    [DropdownMenu.name]: DropdownMenu,
-    [DropdownItem.name]: DropdownItem,
     AppLoading,
-    EmptyState
+    EmptyState,
   },
   setup() {
-    const router = useRouter()
-    const bookService = BookService.getInstance()
-    const loading = ref(true)
-    const activeCategory = ref(0)
-    
+    const router = useRouter();
+    const bookService = BookService.getInstance();
+
+    // 響應式狀態
+    const books = ref([]);
+    const hotBooks = ref([]);
+    const newBooks = ref([]);
+    const loading = ref(true);
+    const activeCategory = ref(0);
+    const viewAllHot = ref(false);
+    const viewAllNew = ref(false);
+    const sortValue = ref('popular');
+    const filterValue = ref('all');
+
     // 分類數據
     const categories = ref([
-      { id: 0, name: '全部' },
-      { id: 1, name: '科幻' },
-      { id: 2, name: '懸疑' },
-      { id: 3, name: '愛情' },
-      { id: 4, name: '歷史' },
-      { id: 5, name: '冒險' }
-    ])
-    
-    // 篩選選項
-    const sortValue = ref(0)
+      { id: 0, name: '推薦' },
+      { id: 1, name: '文學' },
+      { id: 2, name: '商業' },
+      { id: 3, name: '生活' },
+      { id: 4, name: '科技' },
+      { id: 5, name: '藝術' },
+      { id: 6, name: '其他' },
+    ]);
+
+    // 排序選項
     const sortOptions = [
-      { text: '綜合排序', value: 0 },
-      { text: '熱門優先', value: 1 },
-      { text: '評分最高', value: 2 },
-      { text: '最新上架', value: 3 }
-    ]
-    
-    const filterValue = ref(0)
+      { text: '熱門', value: 'popular' },
+      { text: '最新', value: 'newest' },
+      { text: '評分', value: 'rating' },
+    ];
+
+    // 過濾選項
     const filterOptions = [
-      { text: '全部', value: 0 },
-      { text: '完結', value: 1 },
-      { text: '連載中', value: 2 }
-    ]
-    
-    // 書籍數據
-    const books = ref<Book[]>([])
-    const hotBooks = ref<Book[]>([])
-    const newBooks = ref<Book[]>([])
-    
-    // 篩選後的書籍
-    const filteredBooks = computed(() => {
-      if (activeCategory.value === 0) {
-        // 全部分類
-        return applyFilters(books.value)
-      } else {
-        // 特定分類
-        const categoryName = categories.value.find(c => c.id === activeCategory.value)?.name || ''
-        return applyFilters(books.value.filter(book => (book as any).category === categoryName))
-      }
-    })
-    
-    // 應用篩選和排序
-    const applyFilters = (bookList: Book[]) => {
-      let result = [...bookList]
-      
-      // 應用排序
-      if (sortValue.value === 1) {
-        // 熱門優先
-        result.sort((a, b) => Number(b.listenCount) - Number(a.listenCount))
-      } else if (sortValue.value === 2) {
-        // 評分最高
-        result.sort((a, b) => Number(b.rating) - Number(a.rating))
-      } else if (sortValue.value === 3) {
-        // 最新上架
-        result.sort((a, b) => Number(b.id) - Number(a.id))
-      }
-      
-      return result
-    }
-    
-    // 重置篩選
-    const resetFilters = () => {
-      sortValue.value = 0
-      filterValue.value = 0
-      activeCategory.value = 0
-    }
-    
-    // 格式化時間
-    const formatDuration = (seconds: number): string => {
-      const minutes = Math.floor(seconds / 60)
-      const hours = Math.floor(minutes / 60)
-      const remainingMinutes = minutes % 60
-      
-      if (hours > 0) {
-        return `${hours}小時${remainingMinutes}分鐘`
-      }
-      return `${minutes}分鐘`
-    }
-    
-    // 查看全部熱門
-    const viewAllHot = () => {
-      activeCategory.value = 0
-      sortValue.value = 1 // 熱門排序
-    }
-    
-    // 查看全部最新
-    const viewAllNew = () => {
-      activeCategory.value = 0
-      sortValue.value = 3 // 最新排序
-    }
-    
-    // 跳轉到書籍詳情
-    const goToBookDetail = (bookId: number) => {
-      router.push({ name: 'bookDetail', params: { id: bookId } })
-    }
-    
-    // 返回上一頁
-    const handleBack = () => {
-      router.back()
-    }
-    
+      { text: '全部', value: 'all' },
+      { text: '免費', value: 'free' },
+      { text: '付費', value: 'paid' },
+    ];
+
     // 載入數據
     const loadData = async () => {
-      loading.value = true
+      loading.value = true;
       try {
-        const [allBooks, hot, newBooksData] = await Promise.all([
-          bookService.getAllBooks(),
-          bookService.getHotBooks(),
-          bookService.getNewBooks()
-        ])
-        books.value = allBooks
-        hotBooks.value = hot
-        newBooks.value = newBooksData
+        const [allBooks, hot, newBooksData] = await Promise.all([bookService.getAllBooks(), bookService.getHotBooks(), bookService.getNewBooks()]);
+        books.value = allBooks;
+        hotBooks.value = hot;
+        newBooks.value = newBooksData;
       } catch (error) {
-        console.error('載入數據失敗:', error)
+        console.error('載入數據失敗:', error);
       } finally {
-        loading.value = false
+        loading.value = false;
       }
-    }
+    };
+
+    // 重置過濾條件
+    const resetFilters = () => {
+      sortValue.value = 'popular';
+      filterValue.value = 'all';
+      activeCategory.value = 0;
+    };
+
+    // 查看全部熱門
+    const handleViewAllHot = () => {
+      activeCategory.value = 0;
+      sortValue.value = 'popular';
+      viewAllHot.value = true;
+    };
+
+    // 查看全部最新
+    const handleViewAllNew = () => {
+      activeCategory.value = 0;
+      sortValue.value = 'newest';
+      viewAllNew.value = true;
+    };
+    
+    // 跳轉到書籍詳情
+    const goToBookDetail = bookId => {
+      router.push({ name: 'bookDetail', params: { id: bookId.toString() } });
+    };
+
+    // 格式化時長
+    const formatDuration = seconds => {
+      if (!seconds) return '0分鐘';
+      const hours = Math.floor(seconds / 3600);
+      const minutes = Math.floor((seconds % 3600) / 60);
+      return hours > 0 ? `${hours}時${minutes}分` : `${minutes}分鐘`;
+    };
+
+    // 處理圖片加載錯誤
+    const handleImageError = event => {
+      const img = event.target;
+      img.src = 'https://via.placeholder.com/210x315?text=No+Cover';
+      img.onerror = null; // 防止無限循環
+    };
+
+    // 處理返回按鈕
+    const handleBack = () => {
+      router.back();
+    };
 
     // 初始化數據
     onMounted(() => {
-      loadData()
-    })
-    
+      loadData();
+    });
+
+    // 過濾和排序書籍
+    const filteredBooks = computed(() => {
+      let result = [...books.value];
+
+      // 分類過濾
+      if (activeCategory.value !== 0) {
+        const category = categories.value.find(c => c.id === activeCategory.value);
+        if (category) {
+          result = result.filter(book => book.category === category.name);
+        }
+      }
+
+      // 排序
+      if (sortValue.value === 'popular') {
+        result.sort((a, b) => (b.listenCount || 0) - (a.listenCount || 0));
+      } else if (sortValue.value === 'newest') {
+        result.sort((a, b) => b.id - a.id);
+      } else if (sortValue.value === 'rating') {
+        result.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+      }
+
+      // 過濾器
+      if (filterValue.value === 'free') {
+        result = result.filter(book => book.tags && book.tags.includes('免費'));
+      } else if (filterValue.value === 'paid') {
+        result = result.filter(book => !book.tags || !book.tags.includes('免費'));
+      }
+
+      return result;
+    });
+
     return {
-      loading,
-      activeCategory,
-      categories,
-      sortValue,
-      sortOptions,
-      filterValue,
-      filterOptions,
       books,
-      filteredBooks,
       hotBooks,
       newBooks,
-      resetFilters,
-      formatDuration,
+      loading,
+      activeCategory,
       viewAllHot,
       viewAllNew,
+      sortValue,
+      filterValue,
+      categories,
+      sortOptions,
+      filterOptions,
+      filteredBooks,
+      handleBack,
+      handleViewAllHot,
+      handleViewAllNew,
       goToBookDetail,
-      handleBack
-    }
-  }
-})
+      formatDuration,
+      handleImageError,
+      resetFilters,
+    };
+  },
+};
 </script>
 
-<style lang="scss">
+<style scoped>
+/* 全局變數 */
+:root {
+  --primary: #1989fa;
+  --success: #07c160;
+  --danger: #ee0a24;
+  --warning: #ff976a;
+  --text-primary: #323233;
+  --text-secondary: #969799;
+  --border-color: #ebedf0;
+  --background-color: #f7f8fa;
+  --white: #fff;
+  --gray-1: #f7f8fa;
+  --gray-2: #f2f3f5;
+  --gray-3: #ebedf0;
+  --gray-4: #dcdee0;
+  --gray-5: #c8c9cc;
+  --gray-6: #969799;
+  --gray-7: #646566;
+  --gray-8: #323233;
+  --border-radius-sm: 2px;
+  --border-radius: 4px;
+  --border-radius-lg: 8px;
+  --border-radius-max: 999px;
+  --box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
 .discover-page {
-  padding-bottom: 60px;
-  
-  .category-tabs {
-    margin-top: 10px;
-  }
-  
-  .filter-options {
-    margin-bottom: 16px;
-  }
-  
+  padding-bottom: 50px;
+  background-color: var(--background-color);
+  min-height: 100vh;
+}
+
+/* 頂部導航欄 */
+:deep(.van-nav-bar) {
+  background-color: var(--white);
+  position: sticky;
+  top: 0;
+  z-index: 99;
+}
+
+:deep(.van-nav-bar__title) {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--gray-8);
+}
+
+:deep(.van-icon-arrow-left) {
+  color: var(--gray-8);
+  font-size: 20px;
+}
+
+/* 分類標籤 */
+.category-tabs {
+  background-color: var(--white);
+  position: sticky;
+  top: 46px;
+  z-index: 98;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+:deep(.van-tabs__nav) {
+  background-color: var(--white);
+  padding: 0 16px;
+}
+
+:deep(.van-tab) {
+  font-size: 14px;
+  color: var(--gray-6);
+  padding: 12px 0;
+  font-weight: 500;
+  flex: none;
+  margin-right: 24px;
+}
+
+:deep(.van-tab--active) {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+:deep(.van-tabs__line) {
+  background-color: var(--primary);
+  height: 3px;
+  border-radius: 3px;
+  bottom: 15px;
+}
+
+/* 篩選選項 */
+.filter-options {
+  background-color: var(--white);
+  padding: 0 16px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+:deep(.van-dropdown-menu) {
+  height: 44px;
+}
+
+:deep(.van-dropdown-menu__bar) {
+  height: 44px;
+  box-shadow: none;
+}
+
+:deep(.van-dropdown-menu__title) {
+  font-size: 14px;
+  color: var(--gray-8);
+  padding: 0 8px;
+}
+
+:deep(.van-dropdown-menu__title::after) {
+  border-color: transparent transparent var(--gray-5) var(--gray-5);
+  right: -4px;
+}
+
+:deep(.van-dropdown-menu__title--active) {
+  color: var(--primary);
+}
+
+/* 書籍網格 */
+.book-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  padding: 12px 16px;
+}
+
+.book-card {
+  background: var(--white);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.04);
+  transition: all 0.2s ease;
+}
+
+.book-card:active {
+  opacity: 0.9;
+  transform: translateY(1px);
+}
+
+.book-cover {
+  width: 100%;
+  height: 0;
+  padding-bottom: 140%;
+  position: relative;
+  overflow: hidden;
+  background-color: var(--gray-1);
+}
+
+.cover-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.book-info {
+  padding: 10px 8px;
+}
+
+.book-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--gray-8);
+  margin: 0 0 4px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.4;
+  height: 2.8em;
+}
+
+.book-author {
+  font-size: 12px;
+  color: var(--gray-6);
+  margin: 0 0 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.book-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  color: var(--gray-6);
+}
+
+/* 區塊標題 */
+.section {
+  margin-top: 16px;
+  background-color: var(--white);
+  padding: 16px 0 0;
+  border-radius: 12px 12px 0 0;
+  overflow: hidden;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding: 0 16px;
+}
+
+.section-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--gray-8);
+  position: relative;
+  padding-left: 12px;
+}
+
+.section-header h3::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 14px;
+  background-color: var(--primary);
+  border-radius: 2px;
+}
+
+.view-all {
+  font-size: 12px;
+  color: var(--gray-6);
+  display: flex;
+  align-items: center;
+  transition: color 0.2s;
+}
+
+.view-all:active {
+  color: var(--primary);
+}
+
+.view-all::after {
+  content: '';
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  margin-left: 2px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23969799'%3E%3Cpath d='M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z'/%3E%3C/svg%3E");
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  transition: transform 0.2s;
+}
+
+.view-all:active::after {
+  transform: translateX(2px);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%231989fa'%3E%3Cpath d='M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z'/%3E%3C/svg%3E");
+}
+
+/* 水平滾動書籍列表 */
+.book-scroll {
+  display: flex;
+  overflow-x: auto;
+  gap: 12px;
+  padding: 0 16px 16px;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+.book-scroll::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+/* 水平卡片 */
+.book-card-horizontal {
+  flex: 0 0 120px;
+  background: var(--white);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.04);
+  transition: all 0.2s ease;
+}
+
+.book-card-horizontal:active {
+  opacity: 0.9;
+  transform: translateY(1px);
+}
+
+.book-card-horizontal .book-cover {
+  padding-bottom: 133.33%; /* 3:4 比例 */
+  border-radius: 6px 6px 0 0;
+  background-color: var(--gray-1);
+}
+
+.book-card-horizontal .book-info {
+  padding: 10px 8px;
+}
+
+.book-card-horizontal .book-title {
+  font-size: 13px;
+  margin-bottom: 2px;
+  -webkit-line-clamp: 1;
+  height: auto;
+  color: var(--gray-8);
+}
+
+.book-card-horizontal .book-author {
+  font-size: 11px;
+  margin-bottom: 4px;
+  color: var(--gray-6);
+}
+
+.book-rating {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  color: #FFB800;
+  font-size: 11px;
+}
+
+/* 載入狀態 */
+:deep(.van-loading__spinner) {
+  color: var(--primary);
+}
+
+/* 空狀態 */
+:deep(.empty-state) {
+  grid-column: 1 / -1;
+  padding: 60px 0;
+  text-align: center;
+  color: var(--gray-6);
+}
+
+/* 響應式調整 */
+@media (min-width: 400px) {
   .book-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 16px;
-    padding: 0 16px 16px;
-    
-    .book-card {
-      background: #fff;
-      border-radius: 8px;
-      overflow: hidden;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-      
-      .book-info {
-        padding: 8px;
-        
-        .book-title {
-          font-size: 14px;
-          font-weight: 500;
-          margin: 4px 0;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
-        
-        .book-author {
-          font-size: 12px;
-          color: #999;
-          margin: 2px 0;
-        }
-        
-        .book-rating {
-          margin: 4px 0;
-        }
-        
-        .book-tags {
-          margin-top: 4px;
-        }
-      }
-    }
+    grid-template-columns: repeat(3, 1fr);
   }
   
-  .section-title {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0 16px;
-    margin-top: 24px;
-    
-    h2 {
-      font-size: 16px;
-      font-weight: 600;
-      margin: 0;
-    }
-    
-    .view-all {
-      font-size: 12px;
-      color: #1989fa;
-    }
-  }
-  
-  .horizontal-scroll {
-    overflow-x: auto;
-    display: flex;
-    padding: 16px;
-    gap: 12px;
-    
-    .hot-book-card {
-      flex: 0 0 auto;
-      width: 100px;
-      
-      .book-title {
-        font-size: 12px;
-        margin: 8px 0 0;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-      }
-    }
-  }
-  
-  .book-list {
-    padding: 0 16px;
-    
-    .new-book-item {
-      display: flex;
-      padding: 8px 0;
-      border-bottom: 1px solid #f2f2f2;
-      
-      .book-details {
-        flex: 1;
-        padding-left: 12px;
-        
-        .book-title {
-          font-size: 14px;
-          font-weight: 500;
-          margin: 0 0 4px;
-        }
-        
-        .book-author {
-          font-size: 12px;
-          color: #999;
-          margin: 0 0 8px;
-        }
-        
-        .book-meta {
-          display: flex;
-          gap: 12px;
-          font-size: 12px;
-          color: #666;
-          
-          .van-icon {
-            vertical-align: -0.05em;
-            margin-right: 2px;
-          }
-        }
-      }
-    }
+  .book-card-horizontal {
+    flex: 0 0 140px;
   }
 }
+
+@media (min-width: 640px) {
+  .book-grid {
+    grid-template-columns: repeat(4, 1fr);
+    padding: 16px 24px;
+  }
+  
+  .section {
+    margin: 24px 16px;
+    border-radius: 12px;
+  }
+  
+  .book-scroll {
+    padding: 0 24px 24px;
+  }
+}
+
+/* 動畫效果 */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.book-card, .book-card-horizontal {
+  animation: fadeIn 0.3s ease-out forwards;
+  opacity: 0;
+}
+
+/* 為每個卡片添加延遲動畫 */
+.book-card:nth-child(1) { animation-delay: 0.05s; }
+.book-card:nth-child(2) { animation-delay: 0.1s; }
+.book-card-horizontal:nth-child(1) { animation-delay: 0.15s; }
+.book-card-horizontal:nth-child(2) { animation-delay: 0.2s; }
 </style>

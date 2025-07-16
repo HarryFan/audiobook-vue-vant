@@ -4,6 +4,8 @@ import App from './App.vue'
 import Vant from 'vant'
 // 引入 Vant 樣式
 import 'vant/lib/index.css'
+// 引入 Vant Lazyload 插件
+import { Lazyload } from 'vant/es/lazyload'
 // 引入路由
 import router from './router'
 
@@ -12,6 +14,8 @@ const app = createApp(App)
 
 // 使用 Vant
 app.use(Vant)
+// 註冊 Lazyload 插件
+app.use(Lazyload)
 
 // 使用路由
 app.use(router)
