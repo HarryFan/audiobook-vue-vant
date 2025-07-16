@@ -1,7 +1,5 @@
 <template>
   <div class="app-container">
-    <h1>測試頁面渲染</h1>
-    <div class="test-box">基本元素渲染測試</div>
     <router-view></router-view>
     <VanTabbar v-model="active" route>
       <VanTabbarItem to="/home">
@@ -29,27 +27,24 @@
 </template>
 
 <script setup lang="ts">
-import {
-  Tabbar as VanTabbar,
-  TabbarItem as VanTabbarItem
-} from 'vant';
+import { Tabbar as VanTabbar, TabbarItem as VanTabbarItem } from 'vant';
 import { Icon } from '@iconify/vue';
 import { ref } from 'vue';
 
 // 當前激活的標籤頁
-const active = ref(0) // 將首頁作為默認頁面
+const active = ref(0); // 將首頁作為默認頁面
 
 // 根據當前路徑設置激活的標籤
-const currentPath = window.location.pathname
-if (currentPath.includes('/home')) active.value = 0
-if (currentPath.includes('/discover')) active.value = 1
-if (currentPath.includes('/catalog')) active.value = 2
-if (currentPath.includes('/profile')) active.value = 3
-if (currentPath.includes('/player')) active.value = 4
+const currentPath = window.location.pathname;
+if (currentPath.includes('/home')) active.value = 0;
+if (currentPath.includes('/discover')) active.value = 1;
+if (currentPath.includes('/catalog')) active.value = 2;
+if (currentPath.includes('/profile')) active.value = 3;
+if (currentPath.includes('/player')) active.value = 4;
 </script>
 
 <style lang="scss">
-@use "@/styles/variables.scss" as *;
+@use '@/styles/variables.scss' as *;
 .app-container {
   height: 100vh;
   display: flex;
@@ -59,7 +54,7 @@ if (currentPath.includes('/player')) active.value = 4
 .test-box {
   padding: 20px;
   margin: 20px;
-  background-color: #007BFF;
+  background-color: #007bff;
   color: white;
   text-align: center;
   border-radius: 8px;
