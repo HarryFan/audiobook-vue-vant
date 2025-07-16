@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import Home from '../views/Home.vue'
 import AudioPlayer from '../components/AudioPlayer.vue'
+import { bookService } from '../services/bookService'
 
 const routes = [
   {
@@ -16,7 +17,16 @@ const routes = [
     path: '/player',
     name: 'player',
     component: AudioPlayer,
-    props: true
+    // 透過函式提供必要 props，暫以第一本書為示範
+    props: () => {
+      const book = bookService.getAllBooks ? bookService.getAllBooks()[0] : bookService.getBookById('1')
+      return {
+        bookTitle: book?.title || '',
+        authorName: book?.author || '',
+        bookCover: book?.cover || book?.coverUrl || '',
+        audioSrc: book?.audioUrl || ''
+      }
+    }
   },
   {
     path: '/book/:id',

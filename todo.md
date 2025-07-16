@@ -26,6 +26,23 @@
 - [ ] 登錄頁面
 - [ ] 註冊頁面
 
+#### 🔥 依設計規範補強任務
+- [ ] 首頁、書籍列表、詳情頁皆依 designGuidelines.md 標準重構
+- [ ] 播放頁 UI/邏輯依設計規範補強（Header、進度條、控制列、底部 Tabbar）
+- [ ] 書籍資訊區塊元件化，支援封面、書名、作者、出版社、評分
+- [ ] 播放器元件（AudioPlayer.vue）加強無障礙（role, aria-label, 鍵盤操作）
+- [ ] 全站主色、圓角、留白、icon、字體統一
+- [ ] 各頁面狀態處理（無資料、錯誤、載入中）
+- [ ] 播放器錯誤處理與 Toast 提示
+- [ ] Tabbar 選中狀態加底線 indicator
+- [ ] 書籍資料 mock 統一由 bookService 提供
+- [ ] 章節播放、切換、進度同步
+- [ ] 音訊播放 UI/UX 動畫
+- [ ] 音訊元件支援斷點續播
+- [ ] 支援 WebP 封面格式
+- [ ] 所有圖片、icon 加 alt/aria-label
+- [ ] 組件命名/props/型別統一（PascalCase, camelCase, required, default）
+
 ## 3. 頁面開發
 ### 3.1 首頁
 - [x] 頁面佈局
