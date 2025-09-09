@@ -8,19 +8,19 @@
     />
 
     <div class="book-content">
-      <div class="book-cover">
+      <div class="book-cover animate-scale-in">
         <van-image :src="book.cover" width="100%" height="200px" fit="cover" radius="8px" />
       </div>
 
       <div class="book-info">
-        <h1 class="book-title">{{ book.title }}</h1>
-        <p class="book-author">作者：{{ book.author }}</p>
-        <div class="book-rating">
+        <h1 class="book-title animate-fade-in-up delay-100">{{ book.title }}</h1>
+        <p class="book-author animate-fade-in-up delay-200">作者：{{ book.author }}</p>
+        <div class="book-rating animate-fade-in-up delay-300">
           <van-rate v-model="book.rating" readonly size="16px" color="#ffd21e" void-icon="star" void-color="#eee" />
           <span class="rating-count">({{ book.rating }})</span>
         </div>
 
-        <div class="book-meta">
+        <div class="book-meta animate-fade-in-up delay-400">
           <span class="listen-count">
             <van-icon name="play-circle-o" />{{ book.listenCount }}萬
           </span>
@@ -29,12 +29,12 @@
           </span>
         </div>
 
-        <div class="book-description">
+        <div class="book-description animate-fade-in-up delay-500">
           <h3>書籍簡介</h3>
           <p>{{ book.description }}</p>
         </div>
 
-        <div class="book-tags">
+        <div class="book-tags animate-fade-in-up delay-600">
           <h3>標籤</h3>
           <div class="tag-list">
             <van-tag
@@ -48,10 +48,11 @@
           </div>
         </div>
 
-        <div class="book-controls">
+        <div class="book-controls animate-fade-in-up delay-700">
           <van-button
             type="primary"
             block
+            class="animated-button"
             @click="startPlaying"
           >
             <van-icon name="play-circle-o" />立即播放

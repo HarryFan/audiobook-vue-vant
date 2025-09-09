@@ -1,0 +1,273 @@
+// Animation Utilities inspired by Animate UI
+// Base animation settings
+:root {
+  --animation-duration: 0.6s;
+  --animation-timing: cubic-bezier(0.4, 0, 0.2, 1);
+  --stagger-delay: 0.1s;
+}
+
+// Fade animations
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: calc(200px + 100%) 0;
+  }
+}
+
+// Animation classes
+.animate-fade-in {
+  animation: fadeIn var(--animation-duration) var(--animation-timing) both;
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp var(--animation-duration) var(--animation-timing) both;
+}
+
+.animate-fade-in-down {
+  animation: fadeInDown var(--animation-duration) var(--animation-timing) both;
+}
+
+.animate-slide-in-right {
+  animation: slideInRight var(--animation-duration) var(--animation-timing) both;
+}
+
+.animate-slide-in-left {
+  animation: slideInLeft var(--animation-duration) var(--animation-timing) both;
+}
+
+.animate-scale-in {
+  animation: scaleIn var(--animation-duration) var(--animation-timing) both;
+}
+
+.animate-pulse {
+  animation: pulse 2s var(--animation-timing) infinite;
+}
+
+// Staggered animations
+.stagger-container > * {
+  opacity: 0;
+  animation: fadeInUp var(--animation-duration) var(--animation-timing) both;
+}
+
+@for $i from 1 through 20 {
+  .stagger-container > *:nth-child(#{$i}) {
+    animation-delay: #{($i - 1) * 0.1s};
+  }
+}
+
+// Hover animations
+.hover-lift {
+  transition: transform 0.3s var(--animation-timing);
+  
+  &:hover {
+    transform: translateY(-4px);
+  }
+}
+
+.hover-scale {
+  transition: transform 0.3s var(--animation-timing);
+  
+  &:hover {
+    transform: scale(1.05);
+  }
+}
+
+.hover-glow {
+  transition: box-shadow 0.3s var(--animation-timing);
+  
+  &:hover {
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  }
+}
+
+// Page transition animations
+.page-enter-active,
+.page-leave-active {
+  transition: all 0.4s var(--animation-timing);
+}
+
+.page-enter-from {
+  opacity: 0;
+  transform: translateX(100px);
+}
+
+.page-leave-to {
+  opacity: 0;
+  transform: translateX(-100px);
+}
+
+// Loading shimmer effect
+.shimmer {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200px 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+// Skeleton loading
+.skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200px 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 4px;
+}
+
+// Search panel animations
+.search-panel-enter-active,
+.search-panel-leave-active {
+  transition: all 0.3s var(--animation-timing);
+}
+
+.search-panel-enter-from,
+.search-panel-leave-to {
+  opacity: 0;
+  transform: translateY(-100%);
+}
+
+// Book card animations
+.book-card {
+  transition: all 0.3s var(--animation-timing);
+  
+  &:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+  }
+  
+  &:active {
+    transform: translateY(-2px);
+  }
+}
+
+// Button animations
+.animated-button {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s var(--animation-timing);
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+  }
+  
+  &:hover::before {
+    left: 100%;
+  }
+}
+
+// Toast animations
+.toast-enter-active {
+  animation: slideInDown 0.3s var(--animation-timing);
+}
+
+.toast-leave-active {
+  animation: fadeInUp 0.3s var(--animation-timing) reverse;
+}
+
+// Tab switching animations
+.tab-content-enter-active,
+.tab-content-leave-active {
+  transition: all 0.3s var(--animation-timing);
+}
+
+.tab-content-enter-from {
+  opacity: 0;
+  transform: translateX(20px);
+}
+
+.tab-content-leave-to {
+  opacity: 0;
+  transform: translateX(-20px);
+}
+
+// Utility classes
+.delay-100 { animation-delay: 0.1s; }
+.delay-200 { animation-delay: 0.2s; }
+.delay-300 { animation-delay: 0.3s; }
+.delay-400 { animation-delay: 0.4s; }
+.delay-500 { animation-delay: 0.5s; }
+
+.duration-200 { animation-duration: 0.2s; }
+.duration-300 { animation-duration: 0.3s; }
+.duration-500 { animation-duration: 0.5s; }
+.duration-700 { animation-duration: 0.7s; }
+.duration-1000 { animation-duration: 1s; }

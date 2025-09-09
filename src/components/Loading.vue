@@ -1,6 +1,6 @@
 <template>
-  <div class="loading-container" :class="{ overlay: overlay }">
-    <van-loading :color="color" :size="size" :vertical="vertical">
+  <div class="loading-container animate-fade-in" :class="{ overlay: overlay }">
+    <van-loading :color="color" :size="size" :vertical="vertical" class="animate-pulse">
       {{ text }}
     </van-loading>
   </div>

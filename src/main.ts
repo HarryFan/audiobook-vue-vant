@@ -8,6 +8,8 @@ import 'vant/lib/index.css'
 import { Lazyload } from 'vant/es/lazyload'
 // 引入路由
 import router from './router'
+// 引入動畫樣式
+import './styles/animations.scss'
 
 // 建立應用
 const app = createApp(App)

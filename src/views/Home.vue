@@ -6,8 +6,8 @@
     </div>
 
     <!-- 搜索面板 -->
-    <transition name="fade">
-      <div v-if="showSearchPanel" class="search-panel">
+    <transition name="search-panel">
+      <div v-if="showSearchPanel" class="search-panel animate-slide-in-down">
         <div class="search-header">
           <van-icon name="arrow-left" @click="showSearchPanel = false" />
           <van-search v-model="searchValue" placeholder="搜索書籍" shape="round" @search="onSearch" @cancel="showSearchPanel = false" />
@@ -21,8 +21,8 @@
               </van-tag>
             </div>
           </div>
-          <div v-else class="search-results">
-            <div v-for="book in searchResults" :key="book.id" class="book-item" @click="goToBookDetail(book.id)">
+          <div v-else class="search-results stagger-container">
+            <div v-for="book in searchResults" :key="book.id" class="book-item animate-fade-in-up" @click="goToBookDetail(book.id)">
               <van-image :src="book.cover" width="100%" height="80px" fit="cover" radius="4px" />
               <div class="book-info">
                 <h3 class="book-title">{{ book.title }}</h3>
@@ -42,8 +42,8 @@
       <van-tabs v-model:active="activeCategory" swipeable>
         <!-- 推薦書籍 -->
         <van-tab title="推薦">
-          <div class="book-list">
-            <div v-for="book in recommendedBooks" :key="book.id" class="book-item" @click="goToBookDetail(book.id)">
+          <div class="book-list stagger-container">
+            <div v-for="book in recommendedBooks" :key="book.id" class="book-item book-card animate-fade-in-up" @click="goToBookDetail(book.id)">
               <van-image :src="book.cover" width="100%" height="150px" fit="cover" radius="8px" />
               <div class="book-info">
                 <h3 class="book-title">{{ book.title }}</h3>
@@ -73,8 +73,8 @@
 
         <!-- 熱門書籍 -->
         <van-tab title="熱門">
-          <div class="book-list">
-            <div v-for="book in hotBooks" :key="book.id" class="book-item" @click="goToBookDetail(book.id)">
+          <div class="book-list stagger-container">
+            <div v-for="book in hotBooks" :key="book.id" class="book-item book-card animate-fade-in-up" @click="goToBookDetail(book.id)">
               <van-image :src="book.cover" width="100%" height="150px" fit="cover" radius="8px" />
               <div class="book-info">
                 <h3 class="book-title">{{ book.title }}</h3>
@@ -104,8 +104,8 @@
 
         <!-- 最新書籍 -->
         <van-tab title="最新">
-          <div class="book-list">
-            <div v-for="book in newBooks" :key="book.id" class="book-item" @click="goToBookDetail(book.id)">
+          <div class="book-list stagger-container">
+            <div v-for="book in newBooks" :key="book.id" class="book-item book-card animate-fade-in-up" @click="goToBookDetail(book.id)">
               <van-image :src="book.cover" width="100%" height="150px" fit="cover" radius="8px" />
               <div class="book-info">
                 <h3 class="book-title">{{ book.title }}</h3>
@@ -329,16 +329,7 @@ export default defineComponent({
     }
   }
 
-  // 淡入淡出動畫
-  .fade-enter-active,
-  .fade-leave-active {
-    transition: opacity 0.3s;
-  }
-
-  .fade-enter,
-  .fade-leave-to {
-    opacity: 0;
-  }
+  // 搜索面板動畫已移至全局 animations.scss
 
   .book-list {
     display: grid;
@@ -350,10 +341,9 @@ export default defineComponent({
       overflow: hidden;
       background: #fff;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-      transition: transform 0.2s;
-
+      
       &:active {
-        transform: scale(0.98);
+        transform: scale(0.98) translateY(-2px);
       }
 
       .book-info {

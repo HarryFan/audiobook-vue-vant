@@ -1,6 +1,10 @@
 <template>
   <div class="app-container">
-    <router-view></router-view>
+    <router-view v-slot="{ Component, route }">
+      <transition name="page" mode="out-in">
+        <component :is="Component" :key="route.path" class="page-content" />
+      </transition>
+    </router-view>
     <VanTabbar v-model="active" route>
       <VanTabbarItem to="/home">
         <template #icon><Icon icon="mdi:home" /></template>
@@ -49,6 +53,11 @@ if (currentPath.includes('/player')) active.value = 4;
   height: 100vh;
   display: flex;
   flex-direction: column;
+}
+
+.page-content {
+  flex: 1;
+  overflow-y: auto;
 }
 
 .test-box {
